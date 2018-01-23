@@ -27,18 +27,18 @@ That should do it.
 
 ## Using RRTM.jl
 
-RRTM.jl was developed to run offline radiative code on output from ECHAM 6.1. It takes as its input a NetCDF file with the following variables defined: `mlev`, `ilev`, `time`, `ktype`, `pp\_fl`, `pp\_hl`, `pp\_sfc`, `tk\_fl`, `tk\_hl`, `tk\_sfc`, `q\_vap`, `q\_liq`, `q\_ice`, `cdnc`, `cld\_frc`, `m\_o3`, `m\_ch4`, `m\_n2o`, `psctm`, `cos\_mu0`, `cos\_mu0m`, `alb`, `hyai`, `hybi`
+RRTM.jl was developed to run offline radiative code on output from ECHAM 6.1. It takes as its input a NetCDF file with the following variables defined: `mlev`, `ilev`, `time`, `ktype`, `pp_fl`, `pp_hl`, `pp_sfc`, `tk_fl`, `tk_hl`, `tk_sfc`, `q_vap`, `q_liq`, `q_ice`, `cdnc`, `cld_frc`, `m_o3`, `m_ch4`, `m_n2o`, `psctm`, `cos_mu0`, `cos_mu0m`, `alb`, `hyai`, `hybi`
 
 Then you can run:
 ```
-radiation(input\_fn,time\_i)
+radiation(input_fn,time_i)
 ```
-where `input\_fn` is your netcdf file, and `time\_i` is the time index you want calculated (it is strongly advised that if you calculate multiple time steps in parallel).
+where `input_fn` is your netcdf file, and `time_i` is the time index you want calculated (it is strongly advised that if you calculate multiple time steps in parallel).
 
 This assumes a T63 grid, and uses ECHAM's standard Earth mask. If you have a different resolution/mask file, you will have to provide that mask file directly as follows: 
 
 ```
-radiation(input\_fn,time\_i,mark\_fn)
+radiation(input_fn,time_i,mark_fn)
 ```
 
 ## Authors
