@@ -10,7 +10,6 @@ This is an implementation of the widely used Fortran radiative transfer code RRT
 
 ## Getting started
 
-First, let's go over installation instructions.
 
 ### Prerequisites
 
