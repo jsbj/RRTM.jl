@@ -70,8 +70,8 @@ const oneminus = 1.0 - 1.0e-06
 const wavenum1 = [ 10., 350., 500., 630., 700., 820., 980.,1080.,1180.,1390.,1480.,1800.,2080.,2250.,2380.,2600., 3250., 4000., 4650., 5150., 6150., 7700.,  8050.,12850.,16000.,22650.,29000.,38000., 820.]
 const wavenum2 = [350., 500., 630., 700., 820., 980.,1080.,1180.,1390.,1480.,1800.,2080.,2250.,2380.,2600.,3250., 4000., 4650., 5150., 6150., 7700., 8050., 12850.,16000.,22650.,29000.,38000.,50000.,2600.]
 const delwave = wavenum2 - wavenum1
-const LW_parameters = load("jlds/LW_parameters.jld")
-const SW_parameters = load("jlds/SW_parameters.jld")
+const LW_parameters = load("$(@__DIR__)/../jlds/LW_parameters.jld")
+const SW_parameters = load("$(@__DIR__)/../jlds/SW_parameters.jld")
 # const aer_tau_lw_vr_full = load("jlds/aerosols.jld")["aer_tau_lw_vr"]
 # const cld_tau_lw_vr_full = load("jlds/clouds.jld")["cld_tau_lw_vr"]
 
@@ -510,7 +510,7 @@ function aerosols(ntime,nlay,nlev,nlat,nlon,philat,hyai,hybi,pp_hl,pp_fl,tk_hl)
     coslon[jlon] = cos(zl)
   end
   
-  aerosol_params = load("jlds/aerosol_parameters.jld")
+  aerosol_params = load("$(@__DIR__)/../jlds/aerosol_parameters.jld")
   caesc = aerosol_params["caesc"]
   caess = aerosol_params["caess"]
   caelc = aerosol_params["caelc"]
