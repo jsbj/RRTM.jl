@@ -125,23 +125,18 @@ function legtri(zsin,icp)
 end
 # big functions
 
-function radiation(input_fn::String,time_i,mask_fn::String = "netcdfs/unit.24.T63GR15.nc")
+function radiation(input_fn::String,time_i,output_path::String,mask_fn::String = "$(@__DIR__)/../netcdfs/unit.24.T63GR15.nc")
 # function radiation(input_fn::String,forcing=1,mask_fn::String = "netcdfs/unit.24.T63GR15.nc")
   # println("Calculating offline radiation for ", input_fn, " time step ", time_i)
   #
   # # println("Loading input datasets...")
   mask_dset = xr.open_dataset(mask_fn,decode_times=false) # (lat=collect(0:(just_these_lats-1)),lon=collect(0:(just_these_lons-1)))
   dset = xr.open_dataset(input_fn,decode_times=false)[:isel](time=collect((time_i:time_i)-1)) # (lat=collect(0:(just_these_lats-1)),lon=collect(0:(just_these_lons-1)))
+
   #
   philat = mask_dset["lat"][:values]
-  nlat = length(philat)
-  nlon = length(mask_dset["lon"])
   laland = mask_dset["SLM"][:values] # export? land sea mask land=.true.
   laglac = mask_dset["GLAC"][:values] # export? glacier mask glacier=.true.
-  nlay = length(dset["mlev"])
-  nlev = length(dset["ilev"])
-  ntime = length(dset["time"])
-  zsemiss = cemiss # fill(cemiss,ntime,nlat,nlon,nb_lw)
   #  Grid area stored from N - > S #
 
   ktype = dset["ktype"][:values] # export? # type of convection
@@ -161,15 +156,11 @@ function radiation(input_fn::String,time_i,mask_fn::String = "netcdfs/unit.24.T6
   # cld_cvr = dset["cld_cvr"][:values] # cld_cvr
   xm_o3 = dset["m_o3"][:values] # export?
   # xm_co2 = dset["m_co2"][:values] # xm_co2
-  xm_co2 = fill(0.000284725 * amco2 / amd, (ntime, nlay, nlat, nlon)) #* forcing # 0.0004325520130805671 (instead of 0.0004325520184673801)
+  xm_co2 = fill(0.000284725 * amco2 / amd, size(xm_o3)) #* forcing # 0.0004325520130805671 (instead of 0.0004325520184673801)
   # pco2 = 0.000284725
   xm_ch4 = dset["m_ch4"][:values] # export?
   xm_n2o = dset["m_n2o"][:values] # export?
-  xm_cfc = zeros(size(dset["m_ch4"][:values])...,2) # export? # icfc == 0 cfcs are 0
-  # xm_o2 = dset["m_o2"][:values] # export?
-  xm_o2 = fill(0.23135895f0, (ntime, nlay, nlat, nlon)) # 0.23135894536972046 (instead of 0.23135895f0)
-  # println("Input datasets loaded.")
-
+  
   # SW inputs
   solar_constant = dset["psctm"][:values][:,1,1]
   cos_mu0 = dset["cos_mu0"][:values] # export?
@@ -186,10 +177,89 @@ function radiation(input_fn::String,time_i,mask_fn::String = "netcdfs/unit.24.T6
   
   hyai = dset["hyai"][:values]
   hybi = dset["hybi"][:values]
+  
+println("philat: ",philat)
+println("laland: ",laland)
+println("laglac: ",laglac)
+println("ktype: ",ktype)
+println("pp_fl: ",pp_fl)
+println("pp_hl: ",pp_hl)
+println("pp_sfc: ",pp_sfc)
+println("tk_fl: ",tk_fl)
+println("tk_hl: ",tk_hl)
+println("tk_sfc: ",tk_sfc)
+println("xm_vap: ",xm_vap)
+println("xm_liq: ",xm_liq)
+println("xm_ice: ",xm_ice)
+println("cdnc: ",cdnc)
+println("cld_frc: ",cld_frc)
+println("xm_o3: ",xm_o3)
+println("xm_ch4: ",xm_ch4)
+println("xm_n2o: ",xm_n2o)
+println("cos_mu0: ",cos_mu0)
+println("cos_mu0m: ",cos_mu0m)
+println("alb: ",alb)
+println("solar_constant: ",solar_constant)
+println("hyai: ",hyai)
+println("hybi: ",hybi)
+println("xm_co2: ",xm_co2)
+
   # rae   = 0.1277E-2     # ratio of atmosphere to earth radius
   # zrae = rae*(rae+2)
   # cos_mu0m = rae./(sqrt.(cos_mu0.^2+zrae)-cos_mu0)
   # cos_mu0m = max.(cos_mu0m,0.1)
+  
+  flx_lw_up_toa,flx_lw_up_clr_toa,flx_sw_up_toa,flx_sw_dn_toa,flx_sw_up_clr_toa,flx_lw_up_surf,flx_lw_dn_surf,flx_lw_up_clr_surf,flx_lw_dn_clr_surf,flx_sw_up_surf,flx_sw_dn_surf,flx_sw_up_clr_surf,flx_sw_dn_clr_surf,flx_lw_up_trop,flx_lw_dn_trop,flx_lw_up_clr_trop,flx_lw_dn_clr_trop,flx_sw_up_trop,flx_sw_dn_trop,flx_sw_up_clr_trop,flx_sw_dn_clr_trop,flx_lw_up_vr,flx_lw_dn_vr,flx_lw_up_clr_vr,flx_lw_dn_clr_vr,flx_sw_up,flx_sw_dn,flx_sw_up_clr,flx_sw_dn_clr = radiation(philat,laland,laglac,ktype,pp_fl,pp_hl,pp_sfc,tk_fl,tk_hl,tk_sfc,xm_vap,xm_liq,xm_ice,cdnc,cld_frc,xm_o3,xm_co2,xm_ch4,xm_n2o,solar_constant,cos_mu0,cos_mu0m,alb,hyai,hybi)
+  
+  dset = dset[:assign](flx_lw_up_toa_estimated = (("time","lat","lon"),flx_lw_up_toa))
+  dset = dset[:assign](flx_lw_up_clr_toa_estimated = (("time","lat","lon"),flx_lw_up_clr_toa))
+  dset = dset[:assign](flx_sw_up_toa_estimated = (("time","lat","lon"),flx_sw_up_toa))
+  dset = dset[:assign](flx_sw_dn_toa_estimated = (("time","lat","lon"),flx_sw_dn_toa))
+  dset = dset[:assign](flx_sw_up_clr_toa_estimated = (("time","lat","lon"),flx_sw_up_clr_toa))
+  dset = dset[:assign](flx_lw_up_surf_estimated = (("time","lat","lon"),flx_lw_up_surf))
+  dset = dset[:assign](flx_lw_dn_surf_estimated = (("time","lat","lon"),flx_lw_dn_surf))
+  dset = dset[:assign](flx_lw_up_clr_surf_estimated = (("time","lat","lon"),flx_lw_up_clr_surf))
+  dset = dset[:assign](flx_lw_dn_clr_surf_estimated = (("time","lat","lon"),flx_lw_dn_clr_surf))
+  dset = dset[:assign](flx_sw_up_surf_estimated = (("time","lat","lon"),flx_sw_up_surf))
+  dset = dset[:assign](flx_sw_dn_surf_estimated = (("time","lat","lon"),flx_sw_dn_surf))
+  dset = dset[:assign](flx_sw_up_clr_surf_estimated = (("time","lat","lon"),flx_sw_up_clr_surf))
+  dset = dset[:assign](flx_sw_dn_clr_surf_estimated = (("time","lat","lon"),flx_sw_dn_clr_surf))
+  dset = dset[:assign](flx_lw_up_trop_estimated = (("time","lat","lon"),flx_lw_up_trop))
+  dset = dset[:assign](flx_lw_dn_trop_estimated = (("time","lat","lon"),flx_lw_dn_trop))
+  dset = dset[:assign](flx_lw_up_clr_trop_estimated = (("time","lat","lon"),flx_lw_up_clr_trop))
+  dset = dset[:assign](flx_lw_dn_clr_trop_estimated = (("time","lat","lon"),flx_lw_dn_clr_trop))
+  dset = dset[:assign](flx_sw_up_trop_estimated = (("time","lat","lon"),flx_sw_up_trop))
+  dset = dset[:assign](flx_sw_dn_trop_estimated = (("time","lat","lon"),flx_sw_dn_trop))
+  dset = dset[:assign](flx_sw_up_clr_trop_estimated = (("time","lat","lon"),flx_sw_up_clr_trop))
+  dset = dset[:assign](flx_sw_dn_clr_trop_estimated = (("time","lat","lon"),flx_sw_dn_clr_trop))
+# else
+  dset = dset[:assign](flx_lw_up_estimated = (("time","ilev","lat","lon"),flx_lw_up_vr))
+  dset = dset[:assign](flx_lw_dn_estimated = (("time","ilev","lat","lon"),flx_lw_dn_vr))
+  dset = dset[:assign](flx_lw_up_clr_estimated = (("time","ilev","lat","lon"),flx_lw_up_clr_vr))
+  dset = dset[:assign](flx_lw_dn_clr_estimated = (("time","ilev","lat","lon"),flx_lw_dn_clr_vr))
+  dset = dset[:assign](flx_sw_up_estimated = (("time","ilev","lat","lon"),flx_sw_up))
+  dset = dset[:assign](flx_sw_dn_estimated = (("time","ilev","lat","lon"),flx_sw_dn))
+  dset = dset[:assign](flx_sw_up_clr_estimated = (("time","ilev","lat","lon"),flx_sw_up_clr))
+  dset = dset[:assign](flx_sw_dn_clr_estimated = (("time","ilev","lat","lon"),flx_sw_dn_clr))
+  # end
+  dset = dset[:drop](["hybi","hyai","hybm","hyam","pp_sfc","psctm","alb","cos_mu0","cos_mu0m","ktype","tod","tk_sfc","dom","pp_hl","tk_hl","q_vap","tk_fl","cld_frc","cdnc","m_o3","m_ch4","pp_fl","q_liq","m_n2o","q_ice","mlev","ilev"])
+  output_fn = replace(split(input_fn,"/")[end],".nc","_offline_radiation_$(lpad(time_i,3,0)).nc")
+  # dset[:to_netcdf]("netcdfs/tmp/" * output_fn)
+  dset[:to_netcdf](output_path * "/" * output_fn)
+  println("Offline radiation completed and written to ", output_fn)
+  nothing
+end
+
+function radiation(philat,laland,laglac,ktype,pp_fl,pp_hl,pp_sfc,tk_fl,tk_hl,tk_sfc,xm_vap,xm_liq,xm_ice,cdnc,cld_frc,xm_o3,xm_co2,xm_ch4,xm_n2o,solar_constant,cos_mu0,cos_mu0m,alb,hyai,hybi)
+  ntime, nlay, nlat, nlon = size(tk_fl)
+  nlev = nlay + 1
+
+  zsemiss = cemiss # fill(cemiss,ntime,nlat,nlon,nb_lw)
+  xm_cfc = zeros(ntime,nlay,nlat,nlon,2) # export? # icfc == 0 cfcs are 0
+  # xm_o2 = dset["m_o2"][:values] # export?
+  xm_o2 = fill(0.23135895f0, (ntime, nlay, nlat, nlon)) # 0.23135894536972046 (instead of 0.23135895f0)
+  # println("Input datasets loaded.")
+  
 
   # println("Preparing input data for RRTM...")
   cld_frc_vr = zeros(ntime,nlay,nlat,nlon)
@@ -348,6 +418,33 @@ function radiation(input_fn::String,time_i,mask_fn::String = "netcdfs/unit.24.T6
   flx_sw_dn_clr_trop = Array{Float64}(ntime,nlat,nlon)
   
   for jlat = 1:nlat, t in 1:ntime, jlon in 1:nlon
+    
+    if jlon ==
+      println("nlay: ",nlay)
+      println("nlev: ",nlev)
+      println("col_dry_vr[t,:,jlat,jlon]: ",col_dry_vr[t,:,jlat,jlon])
+      println("wkl_vr[:,t,:,jlat,jlon]: ",wkl_vr[:,t,:,jlat,jlon])
+      println("wx_vr[:,t,:,jlat,jlon]: ",wx_vr[:,t,:,jlat,jlon])
+      println("cld_frc_vr[t,:,jlat,jlon]: ",cld_frc_vr[t,:,jlat,jlon])
+      println("tk_sfc[t,jlat,jlon]: ",tk_sfc[t,jlat,jlon])
+      println("tk_hl_vr[t,:,jlat,jlon]: ",tk_hl_vr[t,:,jlat,jlon])
+      println("tk_fl_vr[t,:,jlat,jlon]: ",tk_fl_vr[t,:,jlat,jlon])
+      println("pm_sfc[t,jlat,jlon]: ",pm_sfc[t,jlat,jlon])
+      println("pm_fl_vr[t,:,jlat,jlon]: ",pm_fl_vr[t,:,jlat,jlon])
+      println("zsemiss: ",zsemiss)
+      println("solar_constant[t]: ",solar_constant[t])
+      println("cos_mu0[t,jlat,jlon]: ",cos_mu0[t,jlat,jlon])
+      println("cos_mu0m[t,jlat,jlon]: ",cos_mu0m[t,jlat,jlon])
+      println("alb[t,jlat,jlon]: ",alb[t,jlat,jlon])
+      println("aer_tau_lw_vr[t,:,jlat,jlon,:]: ",aer_tau_lw_vr[t,:,jlat,jlon,:])
+      println("aer_tau_sw_vr[t,:,jlat,jlon,:]: ",aer_tau_sw_vr[t,:,jlat,jlon,:])
+      println("aer_piz_sw_vr[t,:,jlat,jlon,:]: ",aer_piz_sw_vr[t,:,jlat,jlon,:])
+      println("aer_cg_sw_vr[t,:,jlat,jlon,:]: ",aer_cg_sw_vr[t,:,jlat,jlon,:])
+      println("cld_tau_lw_vr[t,:,jlat,jlon,:]: ",cld_tau_lw_vr[t,:,jlat,jlon,:])
+      println("cld_tau_sw_vr[t,:,jlat,jlon,:]: ",cld_tau_sw_vr[t,:,jlat,jlon,:])
+      println("cld_piz_sw_vr[t,:,jlat,jlon,:]: ",cld_piz_sw_vr[t,:,jlat,jlon,:])
+      println("cld_cg_sw_vr[t,:,jlat,jlon,:]: ",cld_cg_sw_vr[t,:,jlat,jlon,:])
+    end
   # for jlat = 41:41, t in 1:1, jlon in 181:181
   # for jlat = 5:5, t in 1:1, jlon in 130:130
   # for jlat = 1:1, t in 1:1, jlon in 1:1
@@ -364,7 +461,7 @@ function radiation(input_fn::String,time_i,mask_fn::String = "netcdfs/unit.24.T6
     flx_sw_dn[t,:,jlat,jlon] = flxd_sw_col
     flx_sw_up_clr[t,:,jlat,jlon] = flxu_sw_clr_col
     flx_sw_dn_clr[t,:,jlat,jlon] = flxd_sw_clr_col
-    
+
     flx_lw_up_trop[t,jlat,jlon] = flx_uplw_vr_col[laytrop_col]
     flx_lw_dn_trop[t,jlat,jlon] = flx_dnlw_vr_col[laytrop_col]
     flx_lw_up_clr_trop[t,jlat,jlon] = flx_uplw_clr_vr_col[laytrop_col]
@@ -373,105 +470,70 @@ function radiation(input_fn::String,time_i,mask_fn::String = "netcdfs/unit.24.T6
     flx_sw_dn_trop[t,jlat,jlon] = flxd_sw_col[49-laytrop_col]
     flx_sw_up_clr_trop[t,jlat,jlon] = flxu_sw_clr_col[49-laytrop_col]
     flx_sw_dn_clr_trop[t,jlat,jlon] = flxd_sw_clr_col[49-laytrop_col]
-  end    
+  end
 
   # if :flx_lw_up_toa in keys(dset)
-    zi0 = (solar_constant ./ 1360.874719) .* 1361.371 .* cos_mu0;
-    y1 = solar_constant .* cos_mu0m;  
-    fact = (1361.371/1360.874719) * (cos_mu0 ./ cos_mu0m)
+  zi0 = (solar_constant ./ 1360.874719) .* 1361.371 .* cos_mu0;
+  y1 = solar_constant .* cos_mu0m;  
+  fact = (1361.371/1360.874719) * (cos_mu0 ./ cos_mu0m)
 
-    # TOA
-    flx_lw_up_toa = flx_lw_up_vr[:,end,:,:]
-    flx_lw_up_clr_toa = flx_lw_up_clr_vr[:,end,:,:]
-    flx_sw_up_toa = flx_sw_up[:,1,:,:]
-    flx_sw_dn_toa = flx_sw_dn[:,1,:,:]
-    flx_sw_up_clr_toa = flx_sw_up_clr[:,1,:,:]
-      
-    # surf
-    flx_lw_up_surf = flx_lw_up_vr[:,1,:,:]
-    flx_lw_dn_surf = flx_lw_dn_vr[:,1,:,:]
-    flx_lw_up_clr_surf = flx_lw_up_clr_vr[:,1,:,:]
-    flx_lw_dn_clr_surf = flx_lw_dn_clr_vr[:,1,:,:]
-    flx_sw_up_surf = flx_sw_up[:,end,:,:]
-    flx_sw_dn_surf = flx_sw_dn[:,end,:,:]
-    flx_sw_up_clr_surf = flx_sw_up_clr[:,end,:,:]
-    flx_sw_dn_clr_surf = flx_sw_dn_clr[:,end,:,:]
+  # TOA
+  flx_lw_up_toa = flx_lw_up_vr[:,end,:,:]
+  flx_lw_up_clr_toa = flx_lw_up_clr_vr[:,end,:,:]
+  flx_sw_up_toa = flx_sw_up[:,1,:,:]
+  flx_sw_dn_toa = flx_sw_dn[:,1,:,:]
+  flx_sw_up_clr_toa = flx_sw_up_clr[:,1,:,:]
+    
+  # surf
+  flx_lw_up_surf = flx_lw_up_vr[:,1,:,:]
+  flx_lw_dn_surf = flx_lw_dn_vr[:,1,:,:]
+  flx_lw_up_clr_surf = flx_lw_up_clr_vr[:,1,:,:]
+  flx_lw_dn_clr_surf = flx_lw_dn_clr_vr[:,1,:,:]
+  flx_sw_up_surf = flx_sw_up[:,end,:,:]
+  flx_sw_dn_surf = flx_sw_dn[:,end,:,:]
+  flx_sw_up_clr_surf = flx_sw_up_clr[:,end,:,:]
+  flx_sw_dn_clr_surf = flx_sw_dn_clr[:,end,:,:]
 
-    # flx_sw_net_surf = flx_sw_dn_surf - flx_sw_up_surf
-    # flx_sw_net_clr_surf = flx_sw_dn_clr_surf - flx_sw_up_clr_surf
-    # flx_sw_net_toa = flx_sw_dn_toa - flx_sw_up_toa
-    # flx_sw_net_clr_toa = flx_sw_dn_toa - flx_sw_up_clr_toa
-    #
-    # flx_sw_up_toa = zi0 .* (flx_sw_net_toa ./ y1 - 1);
-    # flx_sw_dn_toa = zi0
-    # flx_sw_net_clr_toa  = fact .* flx_sw_net_clr_toa
-    # flx_sw_up_clr_toa = flx_sw_dn_toa - flx_sw_net_clr_toa
-    #
-    # alb_fact = 1./(1-alb)-1
-    # flx_sw_net_surf  = fact .* flx_sw_net_surf
-    # flx_sw_up_surf = -flx_sw_net_surf .* alb_fact
-    # flx_sw_dn_surf = flx_sw_net_surf + flx_sw_up_surf
-    #
-    # flx_sw_net_clr_surf  = fact .* flx_sw_net_clr_surf
-    # flx_sw_up_clr_surf = -flx_sw_net_clr_surf .* alb_fact
-    # flx_sw_dn_clr_surf = flx_sw_net_clr_surf - flx_sw_up_clr_surf
+  # flx_sw_net_surf = flx_sw_dn_surf - flx_sw_up_surf
+  # flx_sw_net_clr_surf = flx_sw_dn_clr_surf - flx_sw_up_clr_surf
+  # flx_sw_net_toa = flx_sw_dn_toa - flx_sw_up_toa
+  # flx_sw_net_clr_toa = flx_sw_dn_toa - flx_sw_up_clr_toa
+  #
+  # flx_sw_up_toa = zi0 .* (flx_sw_net_toa ./ y1 - 1);
+  # flx_sw_dn_toa = zi0
+  # flx_sw_net_clr_toa  = fact .* flx_sw_net_clr_toa
+  # flx_sw_up_clr_toa = flx_sw_dn_toa - flx_sw_net_clr_toa
+  #
+  # alb_fact = 1./(1-alb)-1
+  # flx_sw_net_surf  = fact .* flx_sw_net_surf
+  # flx_sw_up_surf = -flx_sw_net_surf .* alb_fact
+  # flx_sw_dn_surf = flx_sw_net_surf + flx_sw_up_surf
+  #
+  # flx_sw_net_clr_surf  = fact .* flx_sw_net_clr_surf
+  # flx_sw_up_clr_surf = -flx_sw_net_clr_surf .* alb_fact
+  # flx_sw_dn_clr_surf = flx_sw_net_clr_surf - flx_sw_up_clr_surf
 
-    flx_sw_up_toa = .- fact .* flx_sw_up_toa
-    flx_sw_dn_toa = fact .* flx_sw_dn_toa
-    flx_sw_up_clr_toa = .- fact .* flx_sw_up_clr_toa
-    flx_sw_up_surf = .- fact .* flx_sw_up_surf
-    flx_sw_dn_surf = fact .* flx_sw_dn_surf
-    flx_sw_up_clr_surf = .- fact .* flx_sw_up_clr_surf
-    flx_sw_dn_clr_surf = fact .* flx_sw_dn_clr_surf
-    
-    flx_sw_up_trop = .- fact .* flx_sw_up_trop
-    flx_sw_dn_trop = fact .* flx_sw_dn_trop
-    flx_sw_up_clr_trop = .- fact .* flx_sw_up_clr_trop
-    flx_sw_dn_clr_trop = fact .* flx_sw_dn_clr_trop
-    
-    
-    flx_sw_up = fact .* flx_sw_up
-    flx_sw_dn = fact .* flx_sw_dn
-    flx_sw_up_clr = fact .* flx_sw_up_clr
-    flx_sw_dn_clr = fact .* flx_sw_dn_clr
-    
-
-    dset = dset[:assign](flx_lw_up_toa_estimated = (("time","lat","lon"),flx_lw_up_toa))
-    dset = dset[:assign](flx_lw_up_clr_toa_estimated = (("time","lat","lon"),flx_lw_up_clr_toa))
-    dset = dset[:assign](flx_sw_up_toa_estimated = (("time","lat","lon"),flx_sw_up_toa))
-    dset = dset[:assign](flx_sw_dn_toa_estimated = (("time","lat","lon"),flx_sw_dn_toa))
-    dset = dset[:assign](flx_sw_up_clr_toa_estimated = (("time","lat","lon"),flx_sw_up_clr_toa))
-    dset = dset[:assign](flx_lw_up_surf_estimated = (("time","lat","lon"),flx_lw_up_surf))
-    dset = dset[:assign](flx_lw_dn_surf_estimated = (("time","lat","lon"),flx_lw_dn_surf))
-    dset = dset[:assign](flx_lw_up_clr_surf_estimated = (("time","lat","lon"),flx_lw_up_clr_surf))
-    dset = dset[:assign](flx_lw_dn_clr_surf_estimated = (("time","lat","lon"),flx_lw_dn_clr_surf))
-    dset = dset[:assign](flx_sw_up_surf_estimated = (("time","lat","lon"),flx_sw_up_surf))
-    dset = dset[:assign](flx_sw_dn_surf_estimated = (("time","lat","lon"),flx_sw_dn_surf))
-    dset = dset[:assign](flx_sw_up_clr_surf_estimated = (("time","lat","lon"),flx_sw_up_clr_surf))
-    dset = dset[:assign](flx_sw_dn_clr_surf_estimated = (("time","lat","lon"),flx_sw_dn_clr_surf))
-    dset = dset[:assign](flx_lw_up_trop_estimated = (("time","lat","lon"),flx_lw_up_trop))
-    dset = dset[:assign](flx_lw_dn_trop_estimated = (("time","lat","lon"),flx_lw_dn_trop))
-    dset = dset[:assign](flx_lw_up_clr_trop_estimated = (("time","lat","lon"),flx_lw_up_clr_trop))
-    dset = dset[:assign](flx_lw_dn_clr_trop_estimated = (("time","lat","lon"),flx_lw_dn_clr_trop))
-    dset = dset[:assign](flx_sw_up_trop_estimated = (("time","lat","lon"),flx_sw_up_trop))
-    dset = dset[:assign](flx_sw_dn_trop_estimated = (("time","lat","lon"),flx_sw_dn_trop))
-    dset = dset[:assign](flx_sw_up_clr_trop_estimated = (("time","lat","lon"),flx_sw_up_clr_trop))
-    dset = dset[:assign](flx_sw_dn_clr_trop_estimated = (("time","lat","lon"),flx_sw_dn_clr_trop))
-  # else
-    dset = dset[:assign](flx_lw_up_estimated = (("time","ilev","lat","lon"),flx_lw_up_vr))
-    dset = dset[:assign](flx_lw_dn_estimated = (("time","ilev","lat","lon"),flx_lw_dn_vr))
-    dset = dset[:assign](flx_lw_up_clr_estimated = (("time","ilev","lat","lon"),flx_lw_up_clr_vr))
-    dset = dset[:assign](flx_lw_dn_clr_estimated = (("time","ilev","lat","lon"),flx_lw_dn_clr_vr))
-    dset = dset[:assign](flx_sw_up_estimated = (("time","ilev","lat","lon"),flx_sw_up))
-    dset = dset[:assign](flx_sw_dn_estimated = (("time","ilev","lat","lon"),flx_sw_dn))
-    dset = dset[:assign](flx_sw_up_clr_estimated = (("time","ilev","lat","lon"),flx_sw_up_clr))
-    dset = dset[:assign](flx_sw_dn_clr_estimated = (("time","ilev","lat","lon"),flx_sw_dn_clr))
-  # end
-  dset = dset[:drop](["hybi","hyai","hybm","hyam","pp_sfc","psctm","alb","cos_mu0","cos_mu0m","ktype","tod","tk_sfc","dom","pp_hl","tk_hl","q_vap","tk_fl","cld_frc","cdnc","m_o3","m_ch4","pp_fl","q_liq","m_n2o","q_ice","mlev","ilev"])
-  output_fn = replace(split(input_fn,"/")[end],".nc","_offline_radiation_$(lpad(time_i,3,0)).nc")
-  dset[:to_netcdf]("netcdfs/tmp/" * output_fn)
-  println("Offline radiation completed and written to ", output_fn)
-  nothing
+  flx_sw_up_toa = .- fact .* flx_sw_up_toa
+  flx_sw_dn_toa = fact .* flx_sw_dn_toa
+  flx_sw_up_clr_toa = .- fact .* flx_sw_up_clr_toa
+  flx_sw_up_surf = .- fact .* flx_sw_up_surf
+  flx_sw_dn_surf = fact .* flx_sw_dn_surf
+  flx_sw_up_clr_surf = .- fact .* flx_sw_up_clr_surf
+  flx_sw_dn_clr_surf = fact .* flx_sw_dn_clr_surf
+  
+  flx_sw_up_trop = .- fact .* flx_sw_up_trop
+  flx_sw_dn_trop = fact .* flx_sw_dn_trop
+  flx_sw_up_clr_trop = .- fact .* flx_sw_up_clr_trop
+  flx_sw_dn_clr_trop = fact .* flx_sw_dn_clr_trop
+  
+  
+  fact = reshape(fact,(ntime,1,nlat,nlon))
+  flx_sw_up = fact .* flx_sw_up
+  flx_sw_dn = fact .* flx_sw_dn
+  flx_sw_up_clr = fact .* flx_sw_up_clr
+  flx_sw_dn_clr = fact .* flx_sw_dn_clr
+  
+  flx_lw_up_toa,flx_lw_up_clr_toa,flx_sw_up_toa,flx_sw_dn_toa,flx_sw_up_clr_toa,flx_lw_up_surf,flx_lw_dn_surf,flx_lw_up_clr_surf,flx_lw_dn_clr_surf,flx_sw_up_surf,flx_sw_dn_surf,flx_sw_up_clr_surf,flx_sw_dn_clr_surf,flx_lw_up_trop,flx_lw_dn_trop,flx_lw_up_clr_trop,flx_lw_dn_clr_trop,flx_sw_up_trop,flx_sw_dn_trop,flx_sw_up_clr_trop,flx_sw_dn_clr_trop,flx_lw_up_vr,flx_lw_dn_vr,flx_lw_up_clr_vr,flx_lw_dn_clr_vr,flx_sw_up,flx_sw_dn,flx_sw_up_clr,flx_sw_dn_clr
 end
 
 function radiation_by_column(nlay,nlev,col_dry_vr,wkl_vr,wx_vr,cld_frc_vr,tk_sfc,tk_hl_vr,tk_fl_vr,pm_sfc,pm_fl_vr,zsemiss,solar_constant,cos_mu0,cos_mu0m,alb,aer_tau_lw_vr,aer_tau_sw_vr,aer_piz_sw_vr,aer_cg_sw_vr,cld_tau_lw_vr,cld_tau_sw_vr,cld_piz_sw_vr,cld_cg_sw_vr)
@@ -746,7 +808,7 @@ function clouds(ntime,nlay,nlev,nlat,nlon,laland,laglac,ktype,zlwp_vr,ziwp_vr,zl
   zinhomi       = 0.80
   zinpar  = 0.10
 
-  cld_opt_props_dset = xr.open_dataset("netcdfs/ECHAM6_CldOptProps.nc",decode_times=false)
+  cld_opt_props_dset = xr.open_dataset("$(@__DIR__)/../netcdfs/ECHAM6_CldOptProps.nc",decode_times=false)
   # if (p_parallel_io)
   wavenumber = cld_opt_props_dset["wavenumber"][:values]
   wavelength = cld_opt_props_dset["wavelength"][:values]
