@@ -126,7 +126,7 @@ end
 # big functions
 
 # radiation called on a full file
-function radiation(input_fn::String,CO2_multiple,time_i,output_path::String,mask_fn::String = "$(@__DIR__)/../netcdfs/unit.24.T63GR15.nc")
+function radiation(input_fn::String,CO2_multiple,time_i,output_path::String = "",mask_fn::String = "$(@__DIR__)/../netcdfs/unit.24.T63GR15.nc")
 # function radiation(input_fn::String,forcing=1,mask_fn::String = "netcdfs/unit.24.T63GR15.nc")
   # println("Calculating offline radiation for ", input_fn, " time step ", time_i)
   #
@@ -244,9 +244,13 @@ println("xm_co2: ",xm_co2)
   dset = dset[:assign](flx_sw_dn_clr_estimated = (("time","ilev","lat","lon"),flx_sw_dn_clr))
   # end
   dset = dset[:drop](["hybi","hyai","hybm","hyam","pp_sfc","psctm","alb","cos_mu0","cos_mu0m","ktype","tod","tk_sfc","dom","pp_hl","tk_hl","q_vap","tk_fl","cld_frc","cdnc","m_o3","m_ch4","pp_fl","q_liq","m_n2o","q_ice","mlev","ilev"])
-  output_fn = replace(split(input_fn,"/")[end],".nc","_offline_radiation_$(lpad(time_i,3,0))_$(CO2_multiple)x.nc")
+  if isempty(output_path)
+    output_fn = replace(input_fn,".nc","_offline_radiation_$(lpad(time_i,3,0))_$(CO2_multiple)x.nc")
+  else
+    output_fn = output_path * "/" * replace(split(input_fn,"/")[end],".nc","_offline_radiation_$(lpad(time_i,3,0))_$(CO2_multiple)x.nc")
+  end
   # dset[:to_netcdf]("netcdfs/tmp/" * output_fn)
-  dset[:to_netcdf](output_path * "/" * output_fn)
+  dset[:to_netcdf](output_fn)
   println("Offline radiation completed and written to ", output_fn)
   nothing
 end
