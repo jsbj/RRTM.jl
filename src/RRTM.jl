@@ -205,10 +205,10 @@ println("hyai: ",hyai)
 println("hybi: ",hybi)
 println("xm_co2: ",xm_co2)
 
-  rae   = 0.1277E-2     # ratio of atmosphere to earth radius
-  zrae = rae*(rae+2)
-  cos_mu0m = rae./(sqrt.(cos_mu0.^2+zrae)-cos_mu0)
-  cos_mu0m = max.(cos_mu0m,0.1)
+  # rae   = 0.1277E-2     # ratio of atmosphere to earth radius
+  # zrae = rae*(rae+2)
+  # cos_mu0m = rae./(sqrt.(cos_mu0.^2+zrae)-cos_mu0)
+  # cos_mu0m = max.(cos_mu0m,0.1)
 
   flx_lw_up_toa,flx_lw_up_clr_toa,flx_sw_up_toa,flx_sw_dn_toa,flx_sw_up_clr_toa,flx_lw_up_surf,flx_lw_dn_surf,flx_lw_up_clr_surf,flx_lw_dn_clr_surf,flx_sw_up_surf,flx_sw_dn_surf,flx_sw_up_clr_surf,flx_sw_dn_clr_surf,flx_lw_up_trop,flx_lw_dn_trop,flx_lw_up_clr_trop,flx_lw_dn_clr_trop,flx_sw_up_trop,flx_sw_dn_trop,flx_sw_up_clr_trop,flx_sw_dn_clr_trop,flx_lw_up_vr,flx_lw_dn_vr,flx_lw_up_clr_vr,flx_lw_dn_clr_vr,flx_sw_up,flx_sw_dn,flx_sw_up_clr,flx_sw_dn_clr = radiation(philat,laland,laglac,ktype,pp_fl,pp_hl,pp_sfc,tk_fl,tk_hl,tk_sfc,xm_vap,xm_liq,xm_ice,cdnc,cld_frc,xm_o3,xm_co2,xm_ch4,xm_n2o,solar_constant,cos_mu0,cos_mu0m,alb,hyai,hybi)
   
