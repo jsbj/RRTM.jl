@@ -212,6 +212,7 @@ println("xm_co2: ",xm_co2)
 
   flx_lw_up_toa,flx_lw_up_clr_toa,flx_sw_up_toa,flx_sw_dn_toa,flx_sw_up_clr_toa,flx_lw_up_surf,flx_lw_dn_surf,flx_lw_up_clr_surf,flx_lw_dn_clr_surf,flx_sw_up_surf,flx_sw_dn_surf,flx_sw_up_clr_surf,flx_sw_dn_clr_surf,flx_lw_up_trop,flx_lw_dn_trop,flx_lw_up_clr_trop,flx_lw_dn_clr_trop,flx_sw_up_trop,flx_sw_dn_trop,flx_sw_up_clr_trop,flx_sw_dn_clr_trop,flx_lw_up_vr,flx_lw_dn_vr,flx_lw_up_clr_vr,flx_lw_dn_clr_vr,flx_sw_up,flx_sw_dn,flx_sw_up_clr,flx_sw_dn_clr = radiation(philat,laland,laglac,ktype,pp_fl,pp_hl,pp_sfc,tk_fl,tk_hl,tk_sfc,xm_vap,xm_liq,xm_ice,cdnc,cld_frc,xm_o3,xm_co2,xm_ch4,xm_n2o,solar_constant,cos_mu0,cos_mu0m,alb,hyai,hybi)
   
+  dset = dset[:drop](["hybi","hyai","hybm","hyam","pp_sfc","psctm","alb","cos_mu0","cos_mu0m","ktype","tod","tk_sfc","dom","pp_hl","tk_hl","q_vap","tk_fl","cld_frc","cdnc","m_o3","m_ch4","pp_fl","q_liq","m_n2o","q_ice","mlev","ilev","flx_lw_dn_surf","flx_lw_dn_clr_surf","flx_lw_up_toa","flx_lw_up_clr_toa","flx_lw_up_surf","flx_lw_up_clr_surf","flx_sw_dn_toa","flx_sw_dn_surf","flx_sw_dn_clr_surf","flx_sw_up_toa","flx_sw_up_clr_toa","flx_sw_up_surf","flx_sw_up_clr_surf"])
   dset = dset[:assign](flx_lw_up_toa = (("time","lat","lon"),flx_lw_up_toa))
   dset = dset[:assign](flx_lw_up_clr_toa = (("time","lat","lon"),flx_lw_up_clr_toa))
   dset = dset[:assign](flx_sw_up_toa = (("time","lat","lon"),flx_sw_up_toa))
@@ -233,7 +234,7 @@ println("xm_co2: ",xm_co2)
   # dset = dset[:assign](flx_sw_dn_trop = (("time","lat","lon"),flx_sw_dn_trop))
   # dset = dset[:assign](flx_sw_up_clr_trop = (("time","lat","lon"),flx_sw_up_clr_trop))
   # dset = dset[:assign](flx_sw_dn_clr_trop = (("time","lat","lon"),flx_sw_dn_clr_trop))
-# else
+  # else
   # dset = dset[:assign](flx_lw_up = (("time","ilev","lat","lon"),flx_lw_up_vr))
   # dset = dset[:assign](flx_lw_dn = (("time","ilev","lat","lon"),flx_lw_dn_vr))
   # dset = dset[:assign](flx_lw_up_clr = (("time","ilev","lat","lon"),flx_lw_up_clr_vr))
@@ -243,7 +244,6 @@ println("xm_co2: ",xm_co2)
   # dset = dset[:assign](flx_sw_up_clr = (("time","ilev","lat","lon"),flx_sw_up_clr))
   # dset = dset[:assign](flx_sw_dn_clr = (("time","ilev","lat","lon"),flx_sw_dn_clr))
   # end
-  dset = dset[:drop](["hybi","hyai","hybm","hyam","pp_sfc","psctm","alb","cos_mu0","cos_mu0m","ktype","tod","tk_sfc","dom","pp_hl","tk_hl","q_vap","tk_fl","cld_frc","cdnc","m_o3","m_ch4","pp_fl","q_liq","m_n2o","q_ice","mlev","ilev","flx_lw_dn_surf","flx_lw_dn_clr_surf","flx_lw_up_toa","flx_lw_up_clr_toa","flx_lw_up_surf","flx_lw_up_clr_surf","flx_sw_dn_toa","flx_sw_dn_surf","flx_sw_dn_clr_surf","flx_sw_up_toa","flx_sw_up_clr_toa","flx_sw_up_surf","flx_sw_up_clr_surf"])
   if isempty(output_path)
     output_fn = replace(input_fn,".nc","_offline_radiation_$(lpad(time_i,3,0))_$(CO2_multiple)x.nc")
   else
