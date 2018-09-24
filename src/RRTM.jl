@@ -178,32 +178,6 @@ function radiation(input_fn::String,CO2_multiple,time_i,output_path::String = ""
   
   hyai = dset["hyai"][:values]
   hybi = dset["hybi"][:values]
-  
-println("philat: ",philat)
-println("laland: ",laland)
-println("laglac: ",laglac)
-println("ktype: ",ktype)
-println("pp_fl: ",pp_fl)
-println("pp_hl: ",pp_hl)
-println("pp_sfc: ",pp_sfc)
-println("tk_fl: ",tk_fl)
-println("tk_hl: ",tk_hl)
-println("tk_sfc: ",tk_sfc)
-println("xm_vap: ",xm_vap)
-println("xm_liq: ",xm_liq)
-println("xm_ice: ",xm_ice)
-println("cdnc: ",cdnc)
-println("cld_frc: ",cld_frc)
-println("xm_o3: ",xm_o3)
-println("xm_ch4: ",xm_ch4)
-println("xm_n2o: ",xm_n2o)
-println("cos_mu0: ",cos_mu0)
-println("cos_mu0m: ",cos_mu0m)
-println("alb: ",alb)
-println("solar_constant: ",solar_constant)
-println("hyai: ",hyai)
-println("hybi: ",hybi)
-println("xm_co2: ",xm_co2)
 
   # rae   = 0.1277E-2     # ratio of atmosphere to earth radius
   # zrae = rae*(rae+2)
