@@ -127,14 +127,13 @@ end
 
 # radiation called on a full file
 function radiation(input_fn::String,CO2_multiple,time_i,output_path::String = "",mask_fn::String = "$(@__DIR__)/../netcdfs/unit.24.T63GR15.nc")
-  println(intersect(["hybi","hyai","hybm","hyam","pp_sfc","psctm","alb","cos_mu0","cos_mu0m","ktype","tod","tk_sfc","dom","pp_hl","tk_hl","q_vap","tk_fl","cld_frc","cdnc","m_o3","m_ch4","pp_fl","q_liq","m_n2o","q_ice","mlev","ilev","flx_lw_dn_surf","flx_lw_dn_clr_surf","flx_lw_up_toa","flx_lw_up_clr_toa","flx_lw_up_surf","flx_lw_up_clr_surf","flx_sw_dn_toa","flx_sw_dn_surf","flx_sw_dn_clr_surf","flx_sw_up_toa","flx_sw_up_clr_toa","flx_sw_up_surf","flx_sw_up_clr_surf"],dset[:keys]()))
 # function radiation(input_fn::String,forcing=1,mask_fn::String = "netcdfs/unit.24.T63GR15.nc")
   # println("Calculating offline radiation for ", input_fn, " time step ", time_i)
   #
   # # println("Loading input datasets...")
   mask_dset = xr.open_dataset(mask_fn,decode_times=false) # (lat=collect(0:(just_these_lats-1)),lon=collect(0:(just_these_lons-1)))
   dset = xr.open_dataset(input_fn,decode_times=false)[:isel](time=collect((time_i:time_i)-1)) # (lat=collect(0:(just_these_lats-1)),lon=collect(0:(just_these_lons-1)))
-
+  println(intersect(["hybi","hyai","hybm","hyam","pp_sfc","psctm","alb","cos_mu0","cos_mu0m","ktype","tod","tk_sfc","dom","pp_hl","tk_hl","q_vap","tk_fl","cld_frc","cdnc","m_o3","m_ch4","pp_fl","q_liq","m_n2o","q_ice","mlev","ilev","flx_lw_dn_surf","flx_lw_dn_clr_surf","flx_lw_up_toa","flx_lw_up_clr_toa","flx_lw_up_surf","flx_lw_up_clr_surf","flx_sw_dn_toa","flx_sw_dn_surf","flx_sw_dn_clr_surf","flx_sw_up_toa","flx_sw_up_clr_toa","flx_sw_up_surf","flx_sw_up_clr_surf"],dset[:keys]()))
   #
   philat = mask_dset["lat"][:values]
   laland = mask_dset["SLM"][:values] # export? land sea mask land=.true.
