@@ -455,7 +455,7 @@ function radiation(philat,laland,laglac,ktype,pp_fl,pp_hl,pp_sfc,tk_fl,tk_hl,tk_
   # if :flx_lw_up_toa in keys(dset)
   zi0 = (solar_constant ./ 1360.874719) .* 1361.371 .* cos_mu0;
   y1 = solar_constant .* cos_mu0m;  
-  fact = 1 # (1361.371/1360.874719) * (cos_mu0 ./ cos_mu0m)
+  fact = (1361.371/1360.874719) * (cos_mu0 ./ cos_mu0m) * 0 + 1
 
   # TOA
   flx_lw_up_toa = flx_lw_up_vr[:,end,:,:]
