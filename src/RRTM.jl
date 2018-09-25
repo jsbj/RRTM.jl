@@ -524,11 +524,11 @@ function radiation_by_column(nlay,nlev,col_dry_vr,wkl_vr,wx_vr,cld_frc_vr,tk_sfc
   flx_uplw_vr,flx_dnlw_vr,flx_uplw_clr_vr,flx_dnlw_clr_vr = LW(nlay,nlev,col_dry_vr,wx_vr,cld_tau_lw_vr,cld_frc_vr,zsemiss,pm_fl_vr,aer_tau_lw_vr,pwvcm,jp,jt,jt1,laytrop,colh2o,colco2,colo3,coln2o,colco,colch4,colo2,colbrd,selffac,forfac,indfor,forfrac,indself,selffrac,scaleminor,scaleminorn2,indminor,minorfrac,fac10,fac00,fac11,fac01,rat_h2oco2,rat_h2oco2_1,rat_o3co2,rat_o3co2_1,rat_h2oo3,rat_h2oo3_1,rat_h2on2o,rat_h2on2o_1,rat_h2och4,rat_h2och4_1,rat_n2oco2,rat_n2oco2_1,planklay,planklev,plankbnd)
 
   # println("SW: ")
-  if cos_mu0 != 0.0
+  # if cos_mu0 != 0.0
     flxd_sw,flxu_sw,flxd_sw_clr,flxu_sw_clr = SW(nlay,nlev,solar_constant,cos_mu0,cos_mu0m,alb,cld_frc_vr,jp,jt,jt1,laytrop,colh2o,colco2,colo3,coln2o,colco,colch4,colo2,colmol,co2mult,selffac,forfac,indfor,forfrac,indself,selffrac,fac10,fac00,fac11,fac01,aer_tau_sw_vr,aer_cg_sw_vr,aer_piz_sw_vr,cld_tau_sw_vr,cld_cg_sw_vr,cld_piz_sw_vr)
-  else
-    flxd_sw,flxu_sw,flxd_sw_clr,flxu_sw_clr = zeros(nlev),zeros(nlev),zeros(nlev),zeros(nlev)
-  end
+  # else
+  #   flxd_sw,flxu_sw,flxd_sw_clr,flxu_sw_clr = zeros(nlev),zeros(nlev),zeros(nlev),zeros(nlev)
+  # end
   # println("radiation: ")
   flx_uplw_vr,flx_dnlw_vr,flx_uplw_clr_vr,flx_dnlw_clr_vr,flxd_sw,flxu_sw,flxd_sw_clr,flxu_sw_clr,laytrop
   # fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev)
