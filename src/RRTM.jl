@@ -457,7 +457,11 @@ function radiation(philat,laland,laglac,ktype,pp_fl,pp_hl,pp_sfc,tk_fl,tk_hl,tk_
   # for jlat = 41:41, t in 1:1, jlon in 181:181
   # for jlat = 5:5, t in 1:1, jlon in 130:130
   # for jlat = 1:1, t in 1:1, jlon in 1:1
+    
     flx_uplw_vr_col,flx_dnlw_vr_col,flx_uplw_clr_vr_col,flx_dnlw_clr_vr_col,flxd_sw_col,flxu_sw_col,flxd_sw_clr_col,flxu_sw_clr_col,laytrop_col = radiation_by_column(nlay,nlev,col_dry_vr[t,:,jlat,jlon],wkl_vr[:,t,:,jlat,jlon],wx_vr[:,t,:,jlat,jlon],cld_frc_vr[t,:,jlat,jlon],tk_sfc[t,jlat,jlon],tk_hl_vr[t,:,jlat,jlon],tk_fl_vr[t,:,jlat,jlon],pm_sfc[t,jlat,jlon],pm_fl_vr[t,:,jlat,jlon],zsemiss,solar_constant[t],cos_mu0[t,jlat,jlon],cos_mu0m[t,jlat,jlon],alb[t,jlat,jlon],aer_tau_lw_vr[t,:,jlat,jlon,:],aer_tau_sw_vr[t,:,jlat,jlon,:],aer_piz_sw_vr[t,:,jlat,jlon,:],aer_cg_sw_vr[t,:,jlat,jlon,:],cld_tau_lw_vr[t,:,jlat,jlon,:],cld_tau_sw_vr[t,:,jlat,jlon,:],cld_piz_sw_vr[t,:,jlat,jlon,:],cld_cg_sw_vr[t,:,jlat,jlon,:])
+    if (jlat == 91) && (jlon == 91) && (t == 1)
+      flx_uplw_vr_col,flx_dnlw_vr_col,flx_uplw_clr_vr_col,flx_dnlw_clr_vr_col,flxd_sw_col,flxu_sw_col,flxd_sw_clr_col,flxu_sw_clr_col,laytrop_col
+    end
 
     # println("-------------------------------------------------------")
     # flx_lw_net[t,:,jlat,jlon] = flx_lw_net_col
