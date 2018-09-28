@@ -133,7 +133,7 @@ function radiation(input_fn::String,CO2_multiple,time_i,output_path::String = ""
   # # println("Loading input datasets...")
   mask_dset = xr.open_dataset(mask_fn,decode_times=false) # (lat=collect(0:(just_these_lats-1)),lon=collect(0:(just_these_lons-1)))
   dset = xr.open_dataset(input_fn,decode_times=false)[:isel](time=collect((time_i:time_i)-1)) # (lat=collect(0:(just_these_lats-1)),lon=collect(0:(just_these_lons-1)))
-  println(intersect(["hybi","hyai","hybm","hyam","pp_sfc","psctm","alb","cos_mu0","cos_mu0m","ktype","tod","tk_sfc","dom","pp_hl","tk_hl","q_vap","tk_fl","cld_frc","cdnc","m_o3","m_ch4","pp_fl","q_liq","m_n2o","q_ice","mlev","ilev","flx_lw_dn_surf","flx_lw_dn_clr_surf","flx_lw_up_toa","flx_lw_up_clr_toa","flx_lw_up_surf","flx_lw_up_clr_surf","flx_sw_dn_toa","flx_sw_dn_surf","flx_sw_dn_clr_surf","flx_sw_up_toa","flx_sw_up_clr_toa","flx_sw_up_surf","flx_sw_up_clr_surf"],dset[:keys]()))
+  # println(intersect(["hybi","hyai","hybm","hyam","pp_sfc","psctm","alb","cos_mu0","cos_mu0m","ktype","tod","tk_sfc","dom","pp_hl","tk_hl","q_vap","tk_fl","cld_frc","cdnc","m_o3","m_ch4","pp_fl","q_liq","m_n2o","q_ice","mlev","ilev","flx_lw_dn_surf","flx_lw_dn_clr_surf","flx_lw_up_toa","flx_lw_up_clr_toa","flx_lw_up_surf","flx_lw_up_clr_surf","flx_sw_dn_toa","flx_sw_dn_surf","flx_sw_dn_clr_surf","flx_sw_up_toa","flx_sw_up_clr_toa","flx_sw_up_surf","flx_sw_up_clr_surf"],dset[:keys]()))
   #
   philat = mask_dset["lat"][:values]
   laland = mask_dset["SLM"][:values] # export? land sea mask land=.true.
@@ -231,6 +231,32 @@ end
 
 # radiation called directly on inputs
 function radiation(philat,laland,laglac,ktype,pp_fl,pp_hl,pp_sfc,tk_fl,tk_hl,tk_sfc,xm_vap,xm_liq,xm_ice,cdnc,cld_frc,xm_o3,xm_co2,xm_ch4,xm_n2o,solar_constant,cos_mu0,cos_mu0m,alb,hyai,hybi)
+  println("philat: ",philat[[lat_i]])
+  println("laland: ",laland[[lat_i],[lon_i]])
+  println("laglac: ",laglac[[lat_i],[lon_i]])
+  println("ktype: ",ktype[[time_i],[lat_i],[lon_i]])
+  println("pp_fl: ",pp_fl[[time_i],:,[lat_i],[lon_i]])
+  println("pp_hl: ",pp_hl[[time_i],:,[lat_i],[lon_i]])
+  println("pp_sfc: ",pp_sfc[[time_i],[lat_i],[lon_i]])
+  println("tk_fl: ",tk_fl[[time_i],:,[lat_i],[lon_i]])
+  println("tk_hl: ",tk_hl[[time_i],:,[lat_i],[lon_i]])
+  println("tk_sfc: ",tk_sfc[[time_i],[lat_i],[lon_i]])
+  println("xm_vap: ",xm_vap[[time_i],:,[lat_i],[lon_i]])
+  println("xm_liq: ",xm_liq[[time_i],:,[lat_i],[lon_i]])
+  println("xm_ice: ",xm_ice[[time_i],:,[lat_i],[lon_i]])
+  println("cdnc: ",cdnc[[time_i],:,[lat_i],[lon_i]])
+  println("cld_frc: ",cld_frc[[time_i],:,[lat_i],[lon_i]])
+  println("xm_o3: ",xm_o3[[time_i],:,[lat_i],[lon_i]])
+  println("xm_co2: ",xm_co2[[time_i],:,[lat_i],[lon_i]])
+  println("xm_ch4: ",xm_ch4[[time_i],:,[lat_i],[lon_i]])
+  println("xm_n2o: ",xm_n2o[[time_i],:,[lat_i],[lon_i]])
+  println("solar_constant: ",solar_constant[[time_i],1,1])
+  println("cos_mu0: ",cos_mu0[[time_i],[lat_i],[lon_i]])
+  println("cos_mu0m: ",cos_mu0m[[time_i],[lat_i],[lon_i]])
+  println("alb: ",alb[[time_i],[lat_i],[lon_i]])
+  println("hyai: ",hyai)
+  println("hybi: ",hybi)
+  
   ntime, nlay, nlat, nlon = size(tk_fl)
   nlev = nlay + 1
 
