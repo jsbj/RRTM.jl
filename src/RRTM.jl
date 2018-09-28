@@ -231,6 +231,9 @@ end
 
 # radiation called directly on inputs
 function radiation(philat,laland,laglac,ktype,pp_fl,pp_hl,pp_sfc,tk_fl,tk_hl,tk_sfc,xm_vap,xm_liq,xm_ice,cdnc,cld_frc,xm_o3,xm_co2,xm_ch4,xm_n2o,solar_constant,cos_mu0,cos_mu0m,alb,hyai,hybi)
+  time_i = 1
+  lat_i = 91
+  lon_i = 91
   println("philat: ",philat[[lat_i]])
   println("laland: ",laland[[lat_i],[lon_i]])
   println("laglac: ",laglac[[lat_i],[lon_i]])
