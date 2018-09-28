@@ -460,7 +460,15 @@ function radiation(philat,laland,laglac,ktype,pp_fl,pp_hl,pp_sfc,tk_fl,tk_hl,tk_
     
     flx_uplw_vr_col,flx_dnlw_vr_col,flx_uplw_clr_vr_col,flx_dnlw_clr_vr_col,flxd_sw_col,flxu_sw_col,flxd_sw_clr_col,flxu_sw_clr_col,laytrop_col = radiation_by_column(nlay,nlev,col_dry_vr[t,:,jlat,jlon],wkl_vr[:,t,:,jlat,jlon],wx_vr[:,t,:,jlat,jlon],cld_frc_vr[t,:,jlat,jlon],tk_sfc[t,jlat,jlon],tk_hl_vr[t,:,jlat,jlon],tk_fl_vr[t,:,jlat,jlon],pm_sfc[t,jlat,jlon],pm_fl_vr[t,:,jlat,jlon],zsemiss,solar_constant[t],cos_mu0[t,jlat,jlon],cos_mu0m[t,jlat,jlon],alb[t,jlat,jlon],aer_tau_lw_vr[t,:,jlat,jlon,:],aer_tau_sw_vr[t,:,jlat,jlon,:],aer_piz_sw_vr[t,:,jlat,jlon,:],aer_cg_sw_vr[t,:,jlat,jlon,:],cld_tau_lw_vr[t,:,jlat,jlon,:],cld_tau_sw_vr[t,:,jlat,jlon,:],cld_piz_sw_vr[t,:,jlat,jlon,:],cld_cg_sw_vr[t,:,jlat,jlon,:])
     if (jlat == 91) && (jlon == 91) && (t == 1)
-      flx_uplw_vr_col,flx_dnlw_vr_col,flx_uplw_clr_vr_col,flx_dnlw_clr_vr_col,flxd_sw_col,flxu_sw_col,flxd_sw_clr_col,flxu_sw_clr_col,laytrop_col
+      println("flx_uplw_vr_col: ",flx_uplw_vr_col)
+      println("flx_dnlw_vr_col: ",flx_dnlw_vr_col)
+      println("flx_uplw_clr_vr_col: ",flx_uplw_clr_vr_col)
+      println("flx_dnlw_clr_vr_col: ",flx_dnlw_clr_vr_col)
+      println("flxd_sw_col: ",flxd_sw_col)
+      println("flxu_sw_col: ",flxu_sw_col)
+      println("flxd_sw_clr_col: ",flxd_sw_clr_col)
+      println("flxu_sw_clr_col: ",flxu_sw_clr_col)
+      println("laytrop_col: ",laytrop_col)
     end
 
     # println("-------------------------------------------------------")
