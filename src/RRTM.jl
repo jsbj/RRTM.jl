@@ -453,9 +453,40 @@ function radiation(philat,laland,laglac,ktype,pp_fl,pp_hl,pp_sfc,tk_fl,tk_hl,tk_
   end
 
   # if :flx_lw_up_toa in keys(dset)
-  zi0 = (solar_constant ./ 1360.874719) .* 1361.371 .* cos_mu0;
-  y1 = solar_constant .* cos_mu0m;  
-  fact = (1361.371/1360.874719) * (cos_mu0 ./ cos_mu0m) * 0 + 1
+
+  # mo_srtm_config.f90:246
+
+  # we need to add a correction, because ECHAM calculates its radiation assuming that faint sunlight is on in the nightside; a correction for diagnostic purposes shifts it over a little and turns off that light.
+    # from radheat.f90:197
+      # zflxs(jl,1)=pi0(jl)*ptrsol(jl,1)
+      # pi0 is zi0
+      # from physc.f90:625
+        # zi0(jl)=flx_ratio_cur*solc*amu0_x(jl,krow)*rdayl_x(jl,krow)
+        # flx_ratio_cur is 
+        # from mo_radiation.f90:163
+          # CASE (3) ->  mo_radiation_parameters.f90:73 INTEGER :: isolrad     =  3      !< mode of solar constant calculation
+          #   solc = SUM(ssi_amip)
+        # amu0_x is 
+        # rdayl_x is
+      # ptrsol is trsol
+      # from radiation.f90:588
+        # trsol(1:kproma,1:klevp1) = flx_dnsw(1:kproma,1:klevp1) / SPREAD(y1(1:kproma),2,klevp1)
+        # from radiation.f90:586
+          # y1(1:kproma) = (psctm*cos_mu0m(1:kproma))
+          # from radiation.f90:243
+            # psctm = flx_ratio_rad*solcm
+              # flx_ratio_rad
+              # from mo_radiation.f90:163
+                # CASE (3) ->  mo_radiation_parameters.f90:73 INTEGER :: isolrad     =  3      !< mode of solar constant calculation
+                #   solc = SUM(ssi_amip)
+                #   #   REAL(wp), PARAMETER :: ssi_amip(14) =  (/ & !< solar flux (W/m2) in 14 SW bands for
+                #                        ! AMIP-type CMIP5 simulation (average from 1979-1988)
+                # & 11.95053_wp, 20.14766_wp, 23.40394_wp, 22.09458_wp, 55.41401_wp,  &
+                # & 102.5134_wp, 24.69814_wp, 347.5362_wp, 217.2925_wp, 343.4221_wp,  &
+                # & 129.403_wp, 47.14264_wp, 3.172126_wp, 13.18075_wp /)
+                # 
+                #  ssi_amip = [11.95053, 20.14766, 23.40394, 22.09458, 55.41401, 102.5134, 24.69814, 347.5362, 217.2925, 343.4221, 129.403, 47.14264, 3.172126, 13.18075]
+  fact = cos_mu0 ./ cos_mu0m
 
   # TOA
   flx_lw_up_toa = flx_lw_up_vr[:,end,:,:]
