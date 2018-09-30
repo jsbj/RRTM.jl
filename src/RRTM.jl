@@ -227,7 +227,7 @@ function radiation(input_fn::String,CO2_multiple,time_i,SW_correction=true,outpu
 end
 
 # radiation called directly on inputs
-function radiation(input,SW_correction=SW_correction,output=output)
+function radiation(input;SW_correction=SW_correction,output=output)
   ntime, nlay, nlat, nlon = size(input[:tk_fl])
   nlev = nlay + 1
 
