@@ -153,7 +153,7 @@ function radiation(input_fn::String,CO2_multiple,time_i,SW_correction=true,outpu
     :cdnc => dset["cdnc"][:values],
     :cld_frc => dset["cld_frc"][:values],
     :xm_o3 => dset["m_o3"][:values],
-    :xm_co2 => CO2_multiple * fill(0.000284725 * amco2 / amd, size(xm_o3)), # pco2 = 0.000284725
+    :xm_co2 => CO2_multiple * fill(0.000284725 * amco2 / amd, size(dset["m_o3"][:values])), # pco2 = 0.000284725
     :xm_ch4 => dset["m_ch4"][:values],
     :xm_n2o => dset["m_n2o"][:values],
     :solar_constant => dset["psctm"][:values][:,1,1],
