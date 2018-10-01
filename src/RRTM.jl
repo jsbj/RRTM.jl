@@ -227,7 +227,7 @@ function radiation(input_fn::String,CO2_multiple,time_i,SW_correction=true,outpu
 end
 
 # radiation called directly on inputs
-function radiation(input;SW_correction=SW_correction,output_type=output_type)
+function radiation(input;SW_correction=true,output_type=:flux)
   input = copy(input)
   # println(input[:aer_tau_lw_vr][:,1])
   dims = size(input[:tk_fl])
