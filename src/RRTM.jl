@@ -228,7 +228,27 @@ end
 
 # radiation called directly on inputs
 function radiation(input;SW_correction=SW_correction,output=output)
-  ntime, nlay, nlat, nlon = size(input[:tk_fl])
+  input = copy(input)
+  # println(input[:aer_tau_lw_vr][:,1])
+  dims = size(input[:tk_fl])
+  if length(dims) == 1
+    ntime = nlat = nlon = 1
+    nlay = dims[1]
+    for (k,v) in input
+      v_dims = size(v)
+      if length(v_dims) == 2 # aerosols
+        input[k] = reshape(isa(v,Array) ? v : [v],(1,size(v)[1],1,1,size(v)[2]))        
+      else
+        if k in [:laland,:laglac]
+          input[k] = reshape(isa(v,Array) ? v : [v],(size(v)...,1,1))
+        else
+          input[k] = reshape(isa(v,Array) ? v : [v],(1,size(v)...,1,1))
+        end
+      end
+    end
+  else
+    ntime, nlay, nlat, nlon = dims
+  end
   nlev = nlay + 1
 
   zsemiss = cemiss # fill(cemiss,ntime,nlat,nlon,nb_lw)
@@ -321,7 +341,7 @@ function radiation(input;SW_correction=SW_correction,output=output)
     @. wkl_vr[3,:,jk,:,:]   = input[:xm_o3][:,jkb,:,:] *amd/amo3
     @. wkl_vr[4,:,jk,:,:]   = input[:xm_n2o][:,jkb,:,:]*amd/amn2o
     @. wkl_vr[6,:,jk,:,:]   = input[:xm_ch4][:,jkb,:,:]*amd/amch4
-    @. wkl_vr[7,:,jk,:,:]   = input[:xm_o2][:,jkb,:,:]*amd/amo2
+    @. wkl_vr[7,:,jk,:,:]   = xm_o2[:,jkb,:,:]*amd/amo2
     amm                  = (1.0-wkl_vr[1,:,jk,:,:])*amd + wkl_vr[1,:,jk,:,:]*amw
     col_dry_vr[:,jk,:,:] .= (0.01*delta)*10.0*avo./g./amm./ (1.0+wkl_vr[1,:,jk,:,:])
     #
@@ -422,7 +442,7 @@ function radiation(input;SW_correction=SW_correction,output=output)
                 # & 129.403_wp, 47.14264_wp, 3.172126_wp, 13.18075_wp /)
                 # 
                 #  ssi_amip = [11.95053, 20.14766, 23.40394, 22.09458, 55.41401, 102.5134, 24.69814, 347.5362, 217.2925, 343.4221, 129.403, 47.14264, 3.172126, 13.18075]
-  fact = SW_correction ? cos_mu0 ./ cos_mu0mx : ones(cos_mu0)
+  fact = SW_correction ? input[:cos_mu0] ./ input[:cos_mu0m] : ones(input[:cos_mu0])
   
   if output == :profile
     fact = reshape(fact,(ntime,1,nlat,nlon))
@@ -431,16 +451,29 @@ function radiation(input;SW_correction=SW_correction,output=output)
     flx_sw_up_clr = fact .* flx_sw_up_clr
     flx_sw_dn_clr = fact .* flx_sw_dn_clr
     
-    Dict(
-      :LW_up => flx_lw_up_vr,
-      :LW_dn => flx_lw_dn_vr,
-      :SW_up => flx_sw_up,
-      :SW_dn => flx_sw_dn,
-      :LW_up_clr => flx_lw_up_clr_vr,
-      :LW_dn_clr => flx_lw_dn_clr_vr,
-      :SW_up_clr => flx_sw_up_clr,
-      :SW_dn_clr => flx_sw_dn_clr
-    )
+    if length(dims) == 1
+      Dict(
+        :LW_up => flx_lw_up_vr[1,:,1,1],
+        :LW_dn => flx_lw_dn_vr[1,:,1,1],
+        :SW_up => flx_sw_up[1,end:-1:1,1,1],
+        :SW_dn => flx_sw_dn[1,end:-1:1,1,1],
+        :LW_up_clr => flx_lw_up_clr_vr[1,:,1,1],
+        :LW_dn_clr => flx_lw_dn_clr_vr[1,:,1,1],
+        :SW_up_clr => flx_sw_up_clr[1,end:-1:1,1,1],
+        :SW_dn_clr => flx_sw_dn_clr[1,end:-1:1,1,1]
+      )      
+    else
+      Dict(
+        :LW_up => flx_lw_up_vr,
+        :LW_dn => flx_lw_dn_vr,
+        :SW_up => flx_sw_up[:,end:-1:1,:,:],
+        :SW_dn => flx_sw_dn[:,end:-1:1,:,:],
+        :LW_up_clr => flx_lw_up_clr_vr,
+        :LW_dn_clr => flx_lw_dn_clr_vr,
+        :SW_up_clr => flx_sw_up_clr[:,end:-1:1,:,:],
+        :SW_dn_clr => flx_sw_dn_clr[:,end:-1:1,:,:]
+      )
+    end
   elseif output == :flux        
     # # surf
     # flx_lw_up_surf = flx_lw_up_vr[:,1,:,:]
@@ -462,8 +495,8 @@ function radiation(input;SW_correction=SW_correction,output=output)
     # flx_sw_dn_clr_trop = fact .* flx_sw_dn_clr_trop    
     
     Dict(
-      :LW_up_toa => flx_lw_up_vr[:,end,:,:],
-      :LW_up_clr_toa => flx_lw_up_clr_vr[:,end,:,:],
+      :LW_up_toa => .- flx_lw_up_vr[:,end,:,:],
+      :LW_up_clr_toa => .- flx_lw_up_clr_vr[:,end,:,:],
       :SW_up_toa => .- fact .* flx_sw_up[:,1,:,:],
       :SW_dn_toa => fact .* flx_sw_dn[:,1,:,:],
       :SW_up_clr_toa => .- fact .* flx_sw_up_clr[:,1,:,:]
@@ -1995,8 +2028,6 @@ function LW_radiative_transfer_per_band(nlay,nlev,iband,ncbands,planklay,plankle
   clrurad = zeros(nlev);
   
   g_range = (sum(ngc[1:(iband-1)])+1):cumsum(ngc)[iband]
-  
-  # println(cloudy)
 
   cldradd = 0.0 # zeros(ntime);
   clrradd = 0.0 # zeros(ntime);
