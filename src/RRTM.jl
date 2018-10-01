@@ -126,7 +126,7 @@ end
 # big functions
 
 # radiation called on a full file
-function radiation(input_fn::String,CO2_multiple,time_i,SW_correction=true,output=:flux,output_path::String = "",mask_fn::String = "$(@__DIR__)/../netcdfs/unit.24.T63GR15.nc")
+function radiation(input_fn::String,CO2_multiple,time_i,SW_correction=true,output_type=:flux,output_path::String = "",mask_fn::String = "$(@__DIR__)/../netcdfs/unit.24.T63GR15.nc")
   # println("Calculating offline radiation for ", input_fn, " time step ", time_i)
   #
   mask_dset = xr.open_dataset(mask_fn,decode_times=false) # (lat=collect(0:(just_these_lats-1)),lon=collect(0:(just_these_lons-1)))
@@ -164,7 +164,7 @@ function radiation(input_fn::String,CO2_multiple,time_i,SW_correction=true,outpu
     :aer_tau_sw_vr => aer_tau_sw_vr,
     :aer_piz_sw_vr => aer_piz_sw_vr,
     :aer_cg_sw_vr => aer_cg_sw_vr
-  ),SW_correction = SW_correction,output = output)
+  ),SW_correction = SW_correction,output_type = output_type)
     
   # rae   = 0.1277E-2     # ratio of atmosphere to earth radius
   # zrae = rae*(rae+2)
@@ -182,7 +182,7 @@ function radiation(input_fn::String,CO2_multiple,time_i,SW_correction=true,outpu
   # alb_vis_dif = dset["alb_vis_dif"][:values] # alb_vis_dif
   # alb_nir_dif = dset["alb_nir_dif"][:values] # alb_nir_dif  
   dset = dset[:drop](intersect(["hybi","hyai","hybm","hyam","pp_sfc","psctm","alb","cos_mu0","cos_mu0m","ktype","tod","tk_sfc","dom","pp_hl","tk_hl","q_vap","tk_fl","cld_frc","cdnc","m_o3","m_ch4","pp_fl","q_liq","m_n2o","q_ice","mlev","ilev","flx_lw_dn_surf","flx_lw_dn_clr_surf","flx_lw_up_toa","flx_lw_up_clr_toa","flx_lw_up_surf","flx_lw_up_clr_surf","flx_sw_dn_toa","flx_sw_dn_surf","flx_sw_dn_clr_surf","flx_sw_up_toa","flx_sw_up_clr_toa","flx_sw_up_surf","flx_sw_up_clr_surf"],dset[:keys]()))
-  if output == :profile
+  if output_type == :profile
     dset = dset[:assign](LW_up = (("time","ilev","lat","lon"),output[:LW_up]))
     dset = dset[:assign](LW_dn = (("time","ilev","lat","lon"),output[:LW_dn]))
     dset = dset[:assign](SW_up = (("time","ilev","lat","lon"),output[:SW_up]))
@@ -191,7 +191,7 @@ function radiation(input_fn::String,CO2_multiple,time_i,SW_correction=true,outpu
     dset = dset[:assign](LW_dn_clr = (("time","ilev","lat","lon"),output[:LW_dn_clr]))
     dset = dset[:assign](SW_up_clr = (("time","ilev","lat","lon"),output[:SW_up_clr]))
     dset = dset[:assign](SW_dn_clr = (("time","ilev","lat","lon"),output[:SW_dn_clr]))
-  elseif output == :flux
+  elseif output_type == :flux
     dset = dset[:assign](LW_up_toa = (("time","ilev","lat","lon"),output[:LW_up_toa]))
     dset = dset[:assign](LW_up_clr_toa = (("time","ilev","lat","lon"),output[:LW_up_clr_toa]))
     dset = dset[:assign](SW_up_toa = (("time","ilev","lat","lon"),output[:SW_up_toa]))
@@ -227,7 +227,7 @@ function radiation(input_fn::String,CO2_multiple,time_i,SW_correction=true,outpu
 end
 
 # radiation called directly on inputs
-function radiation(input;SW_correction=SW_correction,output=output)
+function radiation(input;SW_correction=SW_correction,output_type=output_type)
   input = copy(input)
   # println(input[:aer_tau_lw_vr][:,1])
   dims = size(input[:tk_fl])
@@ -373,7 +373,7 @@ function radiation(input;SW_correction=SW_correction,output=output)
   flx_sw_up_clr = Array{Float64}(ntime,nlev,nlat,nlon)
   flx_sw_dn_clr = Array{Float64}(ntime,nlev,nlat,nlon)
   
-  # if output == :flux
+  # if output_type == :flux
   #   flx_lw_up_trop = Array{Float64}(ntime,nlat,nlon)
   #   flx_lw_dn_trop = Array{Float64}(ntime,nlat,nlon)
   #   flx_lw_up_clr_trop = Array{Float64}(ntime,nlat,nlon)
@@ -396,7 +396,7 @@ function radiation(input;SW_correction=SW_correction,output=output)
     flx_sw_up_clr[t,:,jlat,jlon] = flxu_sw_clr_col
     flx_sw_dn_clr[t,:,jlat,jlon] = flxd_sw_clr_col
     
-    # if output == :flux
+    # if output_type == :flux
     #   flx_lw_up_trop[t,jlat,jlon] = flx_uplw_vr_col[laytrop_col]
     #   flx_lw_dn_trop[t,jlat,jlon] = flx_dnlw_vr_col[laytrop_col]
     #   flx_lw_up_clr_trop[t,jlat,jlon] = flx_uplw_clr_vr_col[laytrop_col]
@@ -444,7 +444,7 @@ function radiation(input;SW_correction=SW_correction,output=output)
                 #  ssi_amip = [11.95053, 20.14766, 23.40394, 22.09458, 55.41401, 102.5134, 24.69814, 347.5362, 217.2925, 343.4221, 129.403, 47.14264, 3.172126, 13.18075]
   fact = SW_correction ? input[:cos_mu0] ./ input[:cos_mu0m] : ones(input[:cos_mu0])
   
-  if output == :profile
+  if output_type == :profile
     fact = reshape(fact,(ntime,1,nlat,nlon))
     flx_sw_up = fact .* flx_sw_up
     flx_sw_dn = fact .* flx_sw_dn
@@ -474,7 +474,7 @@ function radiation(input;SW_correction=SW_correction,output=output)
         :SW_dn_clr => flx_sw_dn_clr[:,end:-1:1,:,:]
       )
     end
-  elseif output == :flux        
+  elseif output_type == :flux        
     # # surf
     # flx_lw_up_surf = flx_lw_up_vr[:,1,:,:]
     # flx_lw_dn_surf = flx_lw_dn_vr[:,1,:,:]
