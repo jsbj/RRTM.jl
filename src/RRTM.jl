@@ -157,9 +157,10 @@ function radiation(input_fn::String,CO2_multiple,time_i,SW_correction=true,outpu
     :xm_ch4 => dset["m_ch4"][:values],
     :xm_n2o => dset["m_n2o"][:values],
     :solar_constant => dset["psctm"][:values][:,1,1],
-    :cos_mu0 => dset["cos_mu0"][:values],
+    # :cos_mu0 => dset["cos_mu0"][:values],
     :cos_mu0m => dset["cos_mu0m"][:values],
     :alb => dset["alb"][:values],
+    :zi0 => dset["zi0"][:values],
     :aer_tau_lw_vr => aer_tau_lw_vr,
     :aer_tau_sw_vr => aer_tau_sw_vr,
     :aer_piz_sw_vr => aer_piz_sw_vr,
@@ -385,7 +386,7 @@ function radiation(input;SW_correction=true,output_type=:flux)
   # end
   
   for jlat = 1:nlat, t in 1:ntime, jlon in 1:nlon
-    flx_uplw_vr_col,flx_dnlw_vr_col,flx_uplw_clr_vr_col,flx_dnlw_clr_vr_col,flxd_sw_col,flxu_sw_col,flxd_sw_clr_col,flxu_sw_clr_col,laytrop_col = radiation_by_column(nlay,nlev,col_dry_vr[t,:,jlat,jlon],wkl_vr[:,t,:,jlat,jlon],wx_vr[:,t,:,jlat,jlon],cld_frc_vr[t,:,jlat,jlon],input[:tk_hl][t,end,jlat,jlon],tk_hl_vr[t,:,jlat,jlon],tk_fl_vr[t,:,jlat,jlon],pm_sfc[t,jlat,jlon],pm_fl_vr[t,:,jlat,jlon],zsemiss,input[:solar_constant][t],input[:cos_mu0][t,jlat,jlon],input[:cos_mu0m][t,jlat,jlon],input[:alb][t,jlat,jlon],input[:aer_tau_lw_vr][t,:,jlat,jlon,:],input[:aer_tau_sw_vr][t,:,jlat,jlon,:],input[:aer_piz_sw_vr][t,:,jlat,jlon,:],input[:aer_cg_sw_vr][t,:,jlat,jlon,:],cld_tau_lw_vr[t,:,jlat,jlon,:],cld_tau_sw_vr[t,:,jlat,jlon,:],cld_piz_sw_vr[t,:,jlat,jlon,:],cld_cg_sw_vr[t,:,jlat,jlon,:])
+    flx_uplw_vr_col,flx_dnlw_vr_col,flx_uplw_clr_vr_col,flx_dnlw_clr_vr_col,flxd_sw_col,flxu_sw_col,flxd_sw_clr_col,flxu_sw_clr_col,laytrop_col = radiation_by_column(nlay,nlev,col_dry_vr[t,:,jlat,jlon],wkl_vr[:,t,:,jlat,jlon],wx_vr[:,t,:,jlat,jlon],cld_frc_vr[t,:,jlat,jlon],input[:tk_hl][t,end,jlat,jlon],tk_hl_vr[t,:,jlat,jlon],tk_fl_vr[t,:,jlat,jlon],pm_sfc[t,jlat,jlon],pm_fl_vr[t,:,jlat,jlon],zsemiss,input[:solar_constant][t],input[:zi0][t,jlat,jlon],input[:cos_mu0m][t,jlat,jlon],input[:alb][t,jlat,jlon],input[:aer_tau_lw_vr][t,:,jlat,jlon,:],input[:aer_tau_sw_vr][t,:,jlat,jlon,:],input[:aer_piz_sw_vr][t,:,jlat,jlon,:],input[:aer_cg_sw_vr][t,:,jlat,jlon,:],cld_tau_lw_vr[t,:,jlat,jlon,:],cld_tau_sw_vr[t,:,jlat,jlon,:],cld_piz_sw_vr[t,:,jlat,jlon,:],cld_cg_sw_vr[t,:,jlat,jlon,:])
     
     flx_lw_up_vr[t,:,jlat,jlon] = flx_uplw_vr_col
     flx_lw_dn_vr[t,:,jlat,jlon] = flx_dnlw_vr_col
@@ -442,38 +443,27 @@ function radiation(input;SW_correction=true,output_type=:flux)
                 # & 129.403_wp, 47.14264_wp, 3.172126_wp, 13.18075_wp /)
                 # 
                 #  ssi_amip = [11.95053, 20.14766, 23.40394, 22.09458, 55.41401, 102.5134, 24.69814, 347.5362, 217.2925, 343.4221, 129.403, 47.14264, 3.172126, 13.18075]
-  fact = SW_correction ? input[:cos_mu0] ./ input[:cos_mu0m] : ones(input[:cos_mu0])
+  # fact = SW_correction ? input[:cos_mu0] ./ input[:cos_mu0m] : ones(input[:cos_mu0])
+  fact = reshape(SW_correction ? input[:zi0][:,:,:] ./ (input[:solar_constant].*input[:cos_mu0m][:,:,:]) : ones(input[:cos_mu0m]),(ntime,1,nlat,nlon))
+  flx_sw_up = fact .* flx_sw_up
+  flx_sw_dn = fact .* flx_sw_dn
+  flx_sw_up_clr = fact .* flx_sw_up_clr
+  flx_sw_dn_clr = fact .* flx_sw_dn_clr
   
   if output_type == :profile
-    fact = reshape(fact,(ntime,1,nlat,nlon))
-    flx_sw_up = fact .* flx_sw_up
-    flx_sw_dn = fact .* flx_sw_dn
-    flx_sw_up_clr = fact .* flx_sw_up_clr
-    flx_sw_dn_clr = fact .* flx_sw_dn_clr
+
     
-    if length(dims) == 1
-      Dict(
-        :LW_up => flx_lw_up_vr[1,:,1,1],
-        :LW_dn => flx_lw_dn_vr[1,:,1,1],
-        :SW_up => flx_sw_up[1,end:-1:1,1,1],
-        :SW_dn => flx_sw_dn[1,end:-1:1,1,1],
-        :LW_up_clr => flx_lw_up_clr_vr[1,:,1,1],
-        :LW_dn_clr => flx_lw_dn_clr_vr[1,:,1,1],
-        :SW_up_clr => flx_sw_up_clr[1,end:-1:1,1,1],
-        :SW_dn_clr => flx_sw_dn_clr[1,end:-1:1,1,1]
-      )      
-    else
-      Dict(
-        :LW_up => flx_lw_up_vr,
-        :LW_dn => flx_lw_dn_vr,
-        :SW_up => flx_sw_up[:,end:-1:1,:,:],
-        :SW_dn => flx_sw_dn[:,end:-1:1,:,:],
-        :LW_up_clr => flx_lw_up_clr_vr,
-        :LW_dn_clr => flx_lw_dn_clr_vr,
-        :SW_up_clr => flx_sw_up_clr[:,end:-1:1,:,:],
-        :SW_dn_clr => flx_sw_dn_clr[:,end:-1:1,:,:]
-      )
-    end
+    i = length(dims) == 1 ? 1 : :
+    Dict(
+      :LW_up => flx_lw_up_vr[i,:,i,i],
+      :LW_dn => flx_lw_dn_vr[i,:,i,i],
+      :SW_up => flx_sw_up[i,end:-1:i,i,i],
+      :SW_dn => flx_sw_dn[i,end:-1:i,i,i],
+      :LW_up_clr => flx_lw_up_clr_vr[i,:,i,i],
+      :LW_dn_clr => flx_lw_dn_clr_vr[i,:,i,i],
+      :SW_up_clr => flx_sw_up_clr[i,end:-1:i,i,i],
+      :SW_dn_clr => flx_sw_dn_clr[i,end:-1:i,i,i]
+    )      
   elseif output_type == :flux        
     # # surf
     # flx_lw_up_surf = flx_lw_up_vr[:,1,:,:]
@@ -497,14 +487,14 @@ function radiation(input;SW_correction=true,output_type=:flux)
     Dict(
       :LW_up_toa => .- flx_lw_up_vr[:,end,:,:],
       :LW_up_clr_toa => .- flx_lw_up_clr_vr[:,end,:,:],
-      :SW_up_toa => .- fact .* flx_sw_up[:,1,:,:],
-      :SW_dn_toa => fact .* flx_sw_dn[:,1,:,:],
-      :SW_up_clr_toa => .- fact .* flx_sw_up_clr[:,1,:,:]
+      :SW_up_toa => .- flx_sw_up[:,1,:,:],
+      :SW_dn_toa => flx_sw_dn[:,1,:,:],
+      :SW_up_clr_toa => .- flx_sw_up_clr[:,1,:,:]
     )
   end
 end
 
-function radiation_by_column(nlay,nlev,col_dry_vr,wkl_vr,wx_vr,cld_frc_vr,tk_sfc,tk_hl_vr,tk_fl_vr,pm_sfc,pm_fl_vr,zsemiss,solar_constant,cos_mu0,cos_mu0m,alb,aer_tau_lw_vr,aer_tau_sw_vr,aer_piz_sw_vr,aer_cg_sw_vr,cld_tau_lw_vr,cld_tau_sw_vr,cld_piz_sw_vr,cld_cg_sw_vr)
+function radiation_by_column(nlay,nlev,col_dry_vr,wkl_vr,wx_vr,cld_frc_vr,tk_sfc,tk_hl_vr,tk_fl_vr,pm_sfc,pm_fl_vr,zsemiss,solar_constant,zi0,cos_mu0m,alb,aer_tau_lw_vr,aer_tau_sw_vr,aer_piz_sw_vr,aer_cg_sw_vr,cld_tau_lw_vr,cld_tau_sw_vr,cld_piz_sw_vr,cld_cg_sw_vr)
   # println("gases: ")
   pwvcm,jp,jt,jt1,laytrop,colh2o,colco2,colo3,coln2o,colco,colch4,colo2,colmol,colbrd,co2mult,selffac,forfac,indfor,forfrac,indself,selffrac,scaleminor,scaleminorn2,indminor,minorfrac,fac10,fac00,fac11,fac01,rat_h2oco2,rat_h2oco2_1,rat_o3co2,rat_o3co2_1,rat_h2oo3,rat_h2oo3_1,rat_h2on2o,rat_h2on2o_1,rat_h2och4,rat_h2och4_1,rat_n2oco2,rat_n2oco2_1,planklay,planklev,plankbnd = gases(nlay,nlev,col_dry_vr,wkl_vr,tk_sfc,tk_hl_vr,tk_fl_vr,pm_sfc,pm_fl_vr,zsemiss,true,true)
   
@@ -512,11 +502,11 @@ function radiation_by_column(nlay,nlev,col_dry_vr,wkl_vr,wx_vr,cld_frc_vr,tk_sfc
   flx_uplw_vr,flx_dnlw_vr,flx_uplw_clr_vr,flx_dnlw_clr_vr = LW(nlay,nlev,col_dry_vr,wx_vr,cld_tau_lw_vr,cld_frc_vr,zsemiss,pm_fl_vr,aer_tau_lw_vr,pwvcm,jp,jt,jt1,laytrop,colh2o,colco2,colo3,coln2o,colco,colch4,colo2,colbrd,selffac,forfac,indfor,forfrac,indself,selffrac,scaleminor,scaleminorn2,indminor,minorfrac,fac10,fac00,fac11,fac01,rat_h2oco2,rat_h2oco2_1,rat_o3co2,rat_o3co2_1,rat_h2oo3,rat_h2oo3_1,rat_h2on2o,rat_h2on2o_1,rat_h2och4,rat_h2och4_1,rat_n2oco2,rat_n2oco2_1,planklay,planklev,plankbnd)
 
   # println("SW: ")
-  # if cos_mu0 != 0.0
-    flxd_sw,flxu_sw,flxd_sw_clr,flxu_sw_clr = SW(nlay,nlev,solar_constant,cos_mu0,cos_mu0m,alb,cld_frc_vr,jp,jt,jt1,laytrop,colh2o,colco2,colo3,coln2o,colco,colch4,colo2,colmol,co2mult,selffac,forfac,indfor,forfrac,indself,selffrac,fac10,fac00,fac11,fac01,aer_tau_sw_vr,aer_cg_sw_vr,aer_piz_sw_vr,cld_tau_sw_vr,cld_cg_sw_vr,cld_piz_sw_vr)
-  # else
-  #   flxd_sw,flxu_sw,flxd_sw_clr,flxu_sw_clr = zeros(nlev),zeros(nlev),zeros(nlev),zeros(nlev)
-  # end
+  if zi0 != 0.0
+    flxd_sw,flxu_sw,flxd_sw_clr,flxu_sw_clr = SW(nlay,nlev,solar_constant,cos_mu0m,alb,cld_frc_vr,jp,jt,jt1,laytrop,colh2o,colco2,colo3,coln2o,colco,colch4,colo2,colmol,co2mult,selffac,forfac,indfor,forfrac,indself,selffrac,fac10,fac00,fac11,fac01,aer_tau_sw_vr,aer_cg_sw_vr,aer_piz_sw_vr,cld_tau_sw_vr,cld_cg_sw_vr,cld_piz_sw_vr)
+  else
+    flxd_sw,flxu_sw,flxd_sw_clr,flxu_sw_clr = zeros(nlev),zeros(nlev),zeros(nlev),zeros(nlev)
+  end
   # println("radiation: ")
   flx_uplw_vr,flx_dnlw_vr,flx_uplw_clr_vr,flx_dnlw_clr_vr,flxd_sw,flxu_sw,flxd_sw_clr,flxu_sw_clr,laytrop
   # fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev)
@@ -2257,7 +2247,7 @@ function LW_radiative_transfer_per_band(nlay,nlev,iband,ncbands,planklay,plankle
   flx_uplw_vr,flx_dnlw_vr,flx_uplw_clr_vr,flx_dnlw_clr_vr
 end
 
-function SW(nlay,nlev,solar_constant,cos_mu0,cos_mu0m,alb,cld_frc_vr,jp,jt,jt1,laytrop,colh2o,colco2,colo3,coln2o,colco,colch4,colo2,colmol,co2mult,selffac,forfac,indfor,forfrac,indself,selffrac,fac10,fac00,fac11,fac01,aer_tau_sw_vr,aer_cg_sw_vr,aer_piz_sw_vr,cld_tau_sw_vr,cld_cg_sw_vr,cld_piz_sw_vr)
+function SW(nlay,nlev,solar_constant,cos_mu0m,alb,cld_frc_vr,jp,jt,jt1,laytrop,colh2o,colco2,colo3,coln2o,colco,colch4,colo2,colmol,co2mult,selffac,forfac,indfor,forfrac,indself,selffrac,fac10,fac00,fac11,fac01,aer_tau_sw_vr,aer_cg_sw_vr,aer_piz_sw_vr,cld_tau_sw_vr,cld_cg_sw_vr,cld_piz_sw_vr)
   # println("Calculating SW radiation...")
   nir_vis_boundary = 14500.
   par_lower_boundary = 14285.7143 # equivalent to
