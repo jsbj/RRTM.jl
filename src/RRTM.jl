@@ -181,7 +181,7 @@ function radiation(input_fn::String,CO2_multiple,time_i,SW_correction=true,outpu
   # alb_nir_dir = dset["alb_nir_dir"][:values] # alb_nir_dir
   # alb_vis_dif = dset["alb_vis_dif"][:values] # alb_vis_dif
   # alb_nir_dif = dset["alb_nir_dif"][:values] # alb_nir_dif  
-  dset = dset[:drop](intersect(["hybi","hyai","hybm","hyam","pp_sfc","psctm","alb","cos_mu0","cos_mu0m","ktype","tod","tk_sfc","dom","pp_hl","tk_hl","q_vap","tk_fl","cld_frc","cdnc","m_o3","m_ch4","pp_fl","q_liq","m_n2o","q_ice","mlev","ilev","flx_lw_dn_surf","flx_lw_dn_clr_surf","flx_lw_up_toa","flx_lw_up_clr_toa","flx_lw_up_surf","flx_lw_up_clr_surf","flx_sw_dn_toa","flx_sw_dn_surf","flx_sw_dn_clr_surf","flx_sw_up_toa","flx_sw_up_clr_toa","flx_sw_up_surf","flx_sw_up_clr_surf"],dset[:keys]()))
+  dset = dset[:drop](intersect(["hybi","hyai","hybm","hyam","pp_sfc","psctm","alb","cos_mu0","cos_mu0m","ktype","tod","tk_sfc","dom","pp_hl","tk_hl","q_vap","tk_fl","cld_frc","cdnc","m_o3","m_ch4","pp_fl","q_liq","m_n2o","q_ice","mlev","ilev","flx_lw_dn_surf","flx_lw_dn_clr_surf","flx_lw_up_toa","flx_lw_up_clr_toa","flx_lw_up_surf","flx_lw_up_clr_surf","flx_sw_dn_toa","flx_sw_dn_surf","flx_sw_dn_clr_surf","flx_sw_up_toa","flx_sw_up_clr_toa","flx_sw_up_surf","flx_sw_up_clr_surf","zi0"],dset[:keys]()))
   if output_type == :profile
     dset = dset[:assign](LW_up = (("time","ilev","lat","lon"),output[:LW_up]))
     dset = dset[:assign](LW_dn = (("time","ilev","lat","lon"),output[:LW_dn]))
