@@ -452,9 +452,7 @@ function radiation(input,CO2_multiple;SW_correction=true,output_type=:flux)
   flx_sw_dn_clr = fact .* flx_sw_dn_clr
   
   if output_type == :profile
-
-    
-    i = length(dims) == 1 ? 1 : :
+    i = (length(dims) == 1 ? 1 : :)
     Dict(
       :LW_up => flx_lw_up_vr[i,:,i,i],
       :LW_dn => flx_lw_dn_vr[i,:,i,i],
