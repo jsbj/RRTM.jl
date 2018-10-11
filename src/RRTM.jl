@@ -229,7 +229,7 @@ end
 # radiation called directly on inputs
 function radiation(input,CO2_multiple;SW_correction=true,output_type=:flux)
   input = copy(input)
-  input[:xm_co2] = CO2_multiple * fill(0.000284725 * amco2 / amd, size(input[:xm_o3][:values])), # pco2 = 0.000284725
+  input[:xm_co2] = CO2_multiple * fill(0.000284725 * amco2 / amd, size(input[:xm_o3][:values])) # pco2 = 0.000284725
   
   # println(input[:aer_tau_lw_vr][:,1])
   dims = size(input[:tk_fl])
