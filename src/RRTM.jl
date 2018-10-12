@@ -216,9 +216,9 @@ function radiation(input_fn::String,CO2_multiple,time_i,SW_correction=true,outpu
   end
 
   if isempty(output_path)
-    output_fn = replace(input_fn,".nc","_offline_radiation_$(lpad(time_i,3,0))_$(CO2_multiple)x.nc")
+    output_fn = replace(input_fn,".nc","_offline_radiation_$(lpad(time_i,3,0))_$(CO2_multiple)x_$(output_type).nc")
   else
-    output_fn = output_path * "/" * replace(split(input_fn,"/")[end],".nc","_offline_radiation_$(lpad(time_i,3,0))_$(CO2_multiple)x.nc")
+    output_fn = output_path * "/" * replace(split(input_fn,"/")[end],".nc","_offline_radiation_$(lpad(time_i,3,0))_$(CO2_multiple)x_$(output_type).nc")
   end
   # dset[:to_netcdf]("netcdfs/tmp/" * output_fn)
   dset[:to_netcdf](output_fn)
@@ -374,6 +374,7 @@ function radiation(input,CO2_multiple;SW_correction=true,output_type=:flux)
   flx_sw_dn = Array{Float64}(ntime,nlev,nlat,nlon)
   flx_sw_up_clr = Array{Float64}(ntime,nlev,nlat,nlon)
   flx_sw_dn_clr = Array{Float64}(ntime,nlev,nlat,nlon)
+  tropopause = Array{Float64}(ntime,nlat,nlon)
   
   # if output_type == :flux
   #   flx_lw_up_trop = Array{Float64}(ntime,nlat,nlon)
@@ -397,6 +398,7 @@ function radiation(input,CO2_multiple;SW_correction=true,output_type=:flux)
     flx_sw_dn[t,:,jlat,jlon] = flxd_sw_col
     flx_sw_up_clr[t,:,jlat,jlon] = flxu_sw_clr_col
     flx_sw_dn_clr[t,:,jlat,jlon] = flxd_sw_clr_col
+    tropopause[t,jlat,jlon] = laytrop_col
     
     # if output_type == :flux
     #   flx_lw_up_trop[t,jlat,jlon] = flx_uplw_vr_col[laytrop_col]
@@ -461,7 +463,8 @@ function radiation(input,CO2_multiple;SW_correction=true,output_type=:flux)
       :LW_up_clr => flx_lw_up_clr_vr[i,:,i,i],
       :LW_dn_clr => flx_lw_dn_clr_vr[i,:,i,i],
       :SW_up_clr => flx_sw_up_clr[i,end:-1:i,i,i],
-      :SW_dn_clr => flx_sw_dn_clr[i,end:-1:i,i,i]
+      :SW_dn_clr => flx_sw_dn_clr[i,end:-1:i,i,i] #,
+      # :tropopuase => [i,i,i]
     )      
   elseif output_type == :flux        
     # # surf
@@ -488,7 +491,13 @@ function radiation(input,CO2_multiple;SW_correction=true,output_type=:flux)
       :LW_up_clr_toa => .- flx_lw_up_clr_vr[:,end,:,:],
       :SW_up_toa => .- flx_sw_up[:,1,:,:],
       :SW_dn_toa => flx_sw_dn[:,1,:,:],
-      :SW_up_clr_toa => .- flx_sw_up_clr[:,1,:,:]
+      :SW_up_clr_toa => .- flx_sw_up_clr[:,1,:,:],
+      :LW_up_toa => .- flx_lw_up_vr[:,end,:,:],
+      :LW_up_clr_toa => .- flx_lw_up_clr_vr[:,end,:,:],
+      :SW_up_toa => .- flx_sw_up[:,1,:,:],
+      :SW_dn_toa => flx_sw_dn[:,1,:,:],
+      :SW_up_clr_toa => .- flx_sw_up_clr[:,1,:,:] #,
+      # :tropopause => tropopause[:,:,:]
     )
   end
 end
