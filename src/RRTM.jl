@@ -455,6 +455,7 @@ function radiation(input,CO2_multiple;SW_correction=true,output_type=:flux)
   flx_sw_dn_clr = fact .* flx_sw_dn_clr
   
   if output_type == :profile
+    println(tropopause)
     i = (length(dims) == 1 ? 1 : :)
     Dict(
       :LW_up => flx_lw_up_vr[i,:,i,i],
