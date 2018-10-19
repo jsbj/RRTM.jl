@@ -181,7 +181,7 @@ function radiation(input_fn::String,CO2_multiple,time_i,SW_correction=true,outpu
   # alb_nir_dir = dset["alb_nir_dir"][:values] # alb_nir_dir
   # alb_vis_dif = dset["alb_vis_dif"][:values] # alb_vis_dif
   # alb_nir_dif = dset["alb_nir_dif"][:values] # alb_nir_dif  
-  dset = dset[:drop](intersect(["hybi","hyai","hybm","hyam","pp_sfc","psctm","alb","cos_mu0","cos_mu0m","ktype","tod","tk_sfc","dom","pp_hl","tk_hl","q_vap","tk_fl","cld_frc","cdnc","m_o3","m_ch4","pp_fl","q_liq","m_n2o","q_ice","mlev","ilev","flx_lw_dn_surf","flx_lw_dn_clr_surf","flx_lw_up_toa","flx_lw_up_clr_toa","flx_lw_up_surf","flx_lw_up_clr_surf","flx_sw_dn_toa","flx_sw_dn_surf","flx_sw_dn_clr_surf","flx_sw_up_toa","flx_sw_up_clr_toa","flx_sw_up_surf","flx_sw_up_clr_surf","zi0"],dset[:keys]()))
+  dset = dset[:drop](intersect(["hybi","hyai","hybm","hyam","pp_sfc","psctm","alb","cos_mu0","cos_mu0m","ktype","tod","tk_sfc","dom","pp_hl","tk_hl","q_vap","tk_fl","cld_frc","cdnc","m_o3","m_ch4","pp_fl","q_liq","m_n2o","q_ice","mlev","ilev","flx_lw_dn_surf","flx_lw_dn_clr_surf","flx_lw_up_toa","flx_lw_up_clr_toa","flx_lw_up_surf","flx_lw_up_clr_surf","flx_sw_dn_toa","flx_sw_dn_surf","flx_sw_dn_clr_surf","flx_sw_up_toa","flx_sw_up_clr_toa","flx_sw_up_surf","flx_sw_up_clr_surf","zi0","tropo"],dset[:keys]()))
   dset = dset[:assign](tropopause = (("time","lat","lon"),output[:tropopause]))
   if output_type == :profile
     dset = dset[:assign](LW_up = (("time","ilev","lat","lon"),output[:LW_up]))
@@ -375,7 +375,7 @@ function radiation(input,CO2_multiple;SW_correction=true,output_type=:flux)
   flx_sw_dn = Array{Float64}(ntime,nlev,nlat,nlon)
   flx_sw_up_clr = Array{Float64}(ntime,nlev,nlat,nlon)
   flx_sw_dn_clr = Array{Float64}(ntime,nlev,nlat,nlon)
-  tropopause = Array{Int64}(ntime,nlat,nlon)
+  tropopause = Array{Float64}(ntime,nlat,nlon)
   
   if output_type == :flux
     flx_lw_up_trop = Array{Float64}(ntime,nlat,nlon)
@@ -389,7 +389,7 @@ function radiation(input,CO2_multiple;SW_correction=true,output_type=:flux)
   end
   
   for jlat = 1:nlat, t in 1:ntime, jlon in 1:nlon
-    flx_uplw_vr_col,flx_dnlw_vr_col,flx_uplw_clr_vr_col,flx_dnlw_clr_vr_col,flxd_sw_col,flxu_sw_col,flxd_sw_clr_col,flxu_sw_clr_col,laytrop_col = radiation_by_column(nlay,nlev,col_dry_vr[t,:,jlat,jlon],wkl_vr[:,t,:,jlat,jlon],wx_vr[:,t,:,jlat,jlon],cld_frc_vr[t,:,jlat,jlon],input[:tk_hl][t,end,jlat,jlon],tk_hl_vr[t,:,jlat,jlon],tk_fl_vr[t,:,jlat,jlon],pm_sfc[t,jlat,jlon],pm_fl_vr[t,:,jlat,jlon],zsemiss,input[:solar_constant][t],input[:zi0][t,jlat,jlon],input[:cos_mu0m][t,jlat,jlon],input[:alb][t,jlat,jlon],input[:aer_tau_lw_vr][t,:,jlat,jlon,:],input[:aer_tau_sw_vr][t,:,jlat,jlon,:],input[:aer_piz_sw_vr][t,:,jlat,jlon,:],input[:aer_cg_sw_vr][t,:,jlat,jlon,:],cld_tau_lw_vr[t,:,jlat,jlon,:],cld_tau_sw_vr[t,:,jlat,jlon,:],cld_piz_sw_vr[t,:,jlat,jlon,:],cld_cg_sw_vr[t,:,jlat,jlon,:])
+    flx_uplw_vr_col,flx_dnlw_vr_col,flx_uplw_clr_vr_col,flx_dnlw_clr_vr_col,flxd_sw_col,flxu_sw_col,flxd_sw_clr_col,flxu_sw_clr_col = radiation_by_column(nlay,nlev,col_dry_vr[t,:,jlat,jlon],wkl_vr[:,t,:,jlat,jlon],wx_vr[:,t,:,jlat,jlon],cld_frc_vr[t,:,jlat,jlon],input[:tk_hl][t,end,jlat,jlon],tk_hl_vr[t,:,jlat,jlon],tk_fl_vr[t,:,jlat,jlon],pm_sfc[t,jlat,jlon],pm_fl_vr[t,:,jlat,jlon],zsemiss,input[:solar_constant][t],input[:zi0][t,jlat,jlon],input[:cos_mu0m][t,jlat,jlon],input[:alb][t,jlat,jlon],input[:aer_tau_lw_vr][t,:,jlat,jlon,:],input[:aer_tau_sw_vr][t,:,jlat,jlon,:],input[:aer_piz_sw_vr][t,:,jlat,jlon,:],input[:aer_cg_sw_vr][t,:,jlat,jlon,:],cld_tau_lw_vr[t,:,jlat,jlon,:],cld_tau_sw_vr[t,:,jlat,jlon,:],cld_piz_sw_vr[t,:,jlat,jlon,:],cld_cg_sw_vr[t,:,jlat,jlon,:])
     
     flx_lw_up_vr[t,:,jlat,jlon] = flx_uplw_vr_col
     flx_lw_dn_vr[t,:,jlat,jlon] = flx_dnlw_vr_col
@@ -399,17 +399,25 @@ function radiation(input,CO2_multiple;SW_correction=true,output_type=:flux)
     flx_sw_dn[t,:,jlat,jlon] = flxd_sw_col
     flx_sw_up_clr[t,:,jlat,jlon] = flxu_sw_clr_col
     flx_sw_dn_clr[t,:,jlat,jlon] = flxd_sw_clr_col
-    tropopause[t,jlat,jlon] = laytrop_col
+    
+    for i in 1:length(input[:pp_hl])
+      if input[:pp_hl][t,i,jlat,jlon] > input[:tropo][t,jlat,jlon]
+        break
+      end
+    end
+    
+    tropo_i_frac = (input[:tropo][t,jlat,jlon]-input[:pp_hl][t,i-1,jlat,jlon])/(input[:pp_hl][t,i,jlat,jlon]-input[:pp_hl][t,i-1,jlat,jlon])
+    tropopause[t,jlat,jlon] = (i-1) + tropo_i_frac
     
     if output_type == :flux
-      flx_lw_up_trop[t,jlat,jlon] = flx_uplw_vr_col[laytrop_col]
-      flx_lw_dn_trop[t,jlat,jlon] = flx_dnlw_vr_col[laytrop_col]
-      flx_lw_up_clr_trop[t,jlat,jlon] = flx_uplw_clr_vr_col[laytrop_col]
-      flx_lw_dn_clr_trop[t,jlat,jlon] = flx_dnlw_clr_vr_col[laytrop_col]
-      flx_sw_up_trop[t,jlat,jlon] = flxu_sw_col[(nlev+1)-laytrop_col]
-      flx_sw_dn_trop[t,jlat,jlon] = flxd_sw_col[(nlev+1)-laytrop_col]
-      flx_sw_up_clr_trop[t,jlat,jlon] = flxu_sw_clr_col[(nlev+1)-laytrop_col]
-      flx_sw_dn_clr_trop[t,jlat,jlon] = flxd_sw_clr_col[(nlev+1)-laytrop_col]
+      flx_lw_up_trop[t,jlat,jlon] = flx_uplw_vr_col[end:-1:1][i-1] + (flx_uplw_vr_col[end:-1:1][i]-flx_uplw_vr_col[end:-1:1][i-1])*tropo_i_frac
+      flx_lw_dn_trop[t,jlat,jlon] = flx_dnlw_vr_col[end:-1:1][i-1] + (flx_dnlw_vr_col[end:-1:1][i]-flx_dnlw_vr_col[end:-1:1][i-1])*tropo_i_frac
+      flx_lw_up_clr_trop[t,jlat,jlon] = flx_uplw_clr_vr_col[end:-1:1][i-1] + (flx_uplw_clr_vr_col[end:-1:1][i]-flx_uplw_clr_vr_col[end:-1:1][i-1])*tropo_i_frac
+      flx_lw_dn_clr_trop[t,jlat,jlon] = flx_dnlw_clr_vr_col[end:-1:1][i-1] + (flx_dnlw_clr_vr_col[end:-1:1][i]-flx_dnlw_clr_vr_col[end:-1:1][i-1])*tropo_i_frac
+      flx_sw_up_trop[t,jlat,jlon] = flxu_sw_col[i-1] + (flxu_sw_col[i]-flxu_sw_col[i-1])*tropo_i_frac
+      flx_sw_dn_trop[t,jlat,jlon] = flxd_sw_col[i-1] + (flxd_sw_col[i]-flxd_sw_col[i-1])*tropo_i_frac
+      flx_sw_up_clr_trop[t,jlat,jlon] = flxu_sw_clr_col[i-1] + (flxu_sw_clr_col[i]-flxu_sw_clr_col[i-1])*tropo_i_frac
+      flx_sw_dn_clr_trop[t,jlat,jlon] = flxd_sw_clr_col[i-1] + (flxd_sw_clr_col[i]-flxd_sw_clr_col[i-1])*tropo_i_frac
     end
   end
 
@@ -457,13 +465,13 @@ function radiation(input,CO2_multiple;SW_correction=true,output_type=:flux)
   if output_type == :profile
     i = (length(dims) == 1 ? 1 : :)
     Dict(
-      :LW_up => flx_lw_up_vr[i,:,i,i],
+      :LW_up => .- flx_lw_up_vr[i,:,i,i],
       :LW_dn => flx_lw_dn_vr[i,:,i,i],
-      :SW_up => flx_sw_up[i,end:-1:1,i,i],
+      :SW_up => .- flx_sw_up[i,end:-1:1,i,i],
       :SW_dn => flx_sw_dn[i,end:-1:1,i,i],
-      :LW_up_clr => flx_lw_up_clr_vr[i,:,i,i],
+      :LW_up_clr => .- flx_lw_up_clr_vr[i,:,i,i],
       :LW_dn_clr => flx_lw_dn_clr_vr[i,:,i,i],
-      :SW_up_clr => flx_sw_up_clr[i,end:-1:1,i,i],
+      :SW_up_clr => .- flx_sw_up_clr[i,end:-1:1,i,i],
       :SW_dn_clr => flx_sw_dn_clr[i,end:-1:1,i,i],
       :tropopause => tropopause[i,i,i]
     )      
@@ -499,13 +507,13 @@ function radiation(input,CO2_multiple;SW_correction=true,output_type=:flux)
       :SW_up_toa => .- flx_sw_up[:,1,:,:],
       :SW_dn_toa => flx_sw_dn[:,1,:,:],
       :SW_up_clr_toa => .- flx_sw_up_clr[:,1,:,:],
-      :LW_up_trop => flx_lw_up_trop,
+      :LW_up_trop => -flx_lw_up_trop,
       :LW_dn_trop => flx_lw_dn_trop,
-      :LW_up_clr_trop => flx_lw_up_clr_trop,
+      :LW_up_clr_trop => -flx_lw_up_clr_trop,
       :LW_dn_clr_trop => flx_lw_dn_clr_trop,
-      :SW_up_trop => flx_sw_up_trop,
+      :SW_up_trop => -flx_sw_up_trop,
       :SW_dn_trop => flx_sw_dn_trop,
-      :SW_up_clr_trop => flx_sw_up_clr_trop,
+      :SW_up_clr_trop => -flx_sw_up_clr_trop,
       :SW_dn_clr_trop => flx_sw_dn_clr_trop,
       :tropopause => tropopause[:,:,:]
     )
@@ -526,7 +534,7 @@ function radiation_by_column(nlay,nlev,col_dry_vr,wkl_vr,wx_vr,cld_frc_vr,tk_sfc
     flxd_sw,flxu_sw,flxd_sw_clr,flxu_sw_clr = zeros(nlev),zeros(nlev),zeros(nlev),zeros(nlev)
   end
   # println("radiation: ")
-  flx_uplw_vr,flx_dnlw_vr,flx_uplw_clr_vr,flx_dnlw_clr_vr,flxd_sw,flxu_sw,flxd_sw_clr,flxu_sw_clr,laytrop
+  flx_uplw_vr,flx_dnlw_vr,flx_uplw_clr_vr,flx_dnlw_clr_vr,flxd_sw,flxu_sw,flxd_sw_clr,flxu_sw_clr
   # fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev),fill(nb_sw,nlev)
 end
 
