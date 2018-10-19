@@ -160,6 +160,7 @@ function radiation(input_fn::String,CO2_multiple,time_i,SW_correction=true,outpu
     :cos_mu0m => dset["cos_mu0m"][:values],
     :alb => dset["alb"][:values],
     :zi0 => dset["zi0"][:values],
+    :tropo => dset["tropo"][:values],
     :aer_tau_lw_vr => aer_tau_lw_vr,
     :aer_tau_sw_vr => aer_tau_sw_vr,
     :aer_piz_sw_vr => aer_piz_sw_vr,
