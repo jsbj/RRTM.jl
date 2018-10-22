@@ -512,9 +512,9 @@ function radiation(input,CO2_multiple;SW_correction=true,output_type=:flux)
       :LW_dn_trop => flx_lw_dn_trop,
       :LW_up_clr_trop => -flx_lw_up_clr_trop,
       :LW_dn_clr_trop => flx_lw_dn_clr_trop,
-      :SW_up_trop => -flx_sw_up_trop,
+      :SW_up_trop => flx_sw_up_trop,
       :SW_dn_trop => flx_sw_dn_trop,
-      :SW_up_clr_trop => -flx_sw_up_clr_trop,
+      :SW_up_clr_trop => flx_sw_up_clr_trop,
       :SW_dn_clr_trop => flx_sw_dn_clr_trop,
       :tropopause => tropopause[:,:,:]
     )
