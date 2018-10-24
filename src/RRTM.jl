@@ -3,7 +3,7 @@ using PyCall
 using JLD
 @pyimport xarray as xr
 
-export radiation, clouds, aerosols #,setup_RRTM
+export radiation, radiation_pert, clouds, aerosols #,setup_RRTM
 include("setup_RRTM.jl")
 
 # package code goes here
@@ -241,6 +241,7 @@ function radiation(input_fn::String,CO2_multiple,time_i,SW_correction=true,outpu
 end
 
 function radiation_pert(input_fn1::String,input_fn2::String,pert::Symbol,CO2_multiple,time_i,output_fn,output_type,mask_fn::String = "$(@__DIR__)/../netcdfs/unit.24.T63GR15.nc")
+  SW_correction = true
   # println("Calculating offline radiation for ", input_fn, " time step ", time_i)
   #
   mask_dset = xr.open_dataset(mask_fn,decode_times=false) # (lat=collect(0:(just_these_lats-1)),lon=collect(0:(just_these_lons-1)))
@@ -338,39 +339,39 @@ function radiation_pert(input_fn1::String,input_fn2::String,pert::Symbol,CO2_mul
   # alb_nir_dir = dset["alb_nir_dir"][:values] # alb_nir_dir
   # alb_vis_dif = dset["alb_vis_dif"][:values] # alb_vis_dif
   # alb_nir_dif = dset["alb_nir_dif"][:values] # alb_nir_dif  
-  dset = dset[:drop](intersect(["hybi","hyai","hybm","hyam","pp_sfc","psctm","alb","cos_mu0","cos_mu0m","ktype","tod","tk_sfc","dom","pp_hl","tk_hl","q_vap","tk_fl","cld_frc","cdnc","m_o3","m_ch4","pp_fl","q_liq","m_n2o","q_ice","mlev","ilev","flx_lw_dn_surf","flx_lw_dn_clr_surf","flx_lw_up_toa","flx_lw_up_clr_toa","flx_lw_up_surf","flx_lw_up_clr_surf","flx_sw_dn_toa","flx_sw_dn_surf","flx_sw_dn_clr_surf","flx_sw_up_toa","flx_sw_up_clr_toa","flx_sw_up_surf","flx_sw_up_clr_surf","zi0","tropo"],dset[:keys]()))
-  dset = dset[:assign](tropopause = (("time","lat","lon"),output[:tropopause]))
+  dset1 = dset1[:drop](intersect(["hybi","hyai","hybm","hyam","pp_sfc","psctm","alb","cos_mu0","cos_mu0m","ktype","tod","tk_sfc","dom","pp_hl","tk_hl","q_vap","tk_fl","cld_frc","cdnc","m_o3","m_ch4","pp_fl","q_liq","m_n2o","q_ice","mlev","ilev","flx_lw_dn_surf","flx_lw_dn_clr_surf","flx_lw_up_toa","flx_lw_up_clr_toa","flx_lw_up_surf","flx_lw_up_clr_surf","flx_sw_dn_toa","flx_sw_dn_surf","flx_sw_dn_clr_surf","flx_sw_up_toa","flx_sw_up_clr_toa","flx_sw_up_surf","flx_sw_up_clr_surf","zi0","tropo"],dset1[:keys]()))
+  dset1 = dset1[:assign](tropopause = (("time","lat","lon"),output[:tropopause]))
   if output_type == :profile
-    dset = dset[:assign](LW_up = (("time","ilev","lat","lon"),output[:LW_up]))
-    dset = dset[:assign](LW_dn = (("time","ilev","lat","lon"),output[:LW_dn]))
-    dset = dset[:assign](SW_up = (("time","ilev","lat","lon"),output[:SW_up]))
-    dset = dset[:assign](SW_dn = (("time","ilev","lat","lon"),output[:SW_dn]))
-    dset = dset[:assign](LW_up_clr = (("time","ilev","lat","lon"),output[:LW_up_clr]))
-    dset = dset[:assign](LW_dn_clr = (("time","ilev","lat","lon"),output[:LW_dn_clr]))
-    dset = dset[:assign](SW_up_clr = (("time","ilev","lat","lon"),output[:SW_up_clr]))
-    dset = dset[:assign](SW_dn_clr = (("time","ilev","lat","lon"),output[:SW_dn_clr]))
+    dset1 = dset1[:assign](LW_up = (("time","ilev","lat","lon"),output[:LW_up]))
+    dset1 = dset1[:assign](LW_dn = (("time","ilev","lat","lon"),output[:LW_dn]))
+    dset1 = dset1[:assign](SW_up = (("time","ilev","lat","lon"),output[:SW_up]))
+    dset1 = dset1[:assign](SW_dn = (("time","ilev","lat","lon"),output[:SW_dn]))
+    dset1 = dset1[:assign](LW_up_clr = (("time","ilev","lat","lon"),output[:LW_up_clr]))
+    dset1 = dset1[:assign](LW_dn_clr = (("time","ilev","lat","lon"),output[:LW_dn_clr]))
+    dset1 = dset1[:assign](SW_up_clr = (("time","ilev","lat","lon"),output[:SW_up_clr]))
+    dset1 = dset1[:assign](SW_dn_clr = (("time","ilev","lat","lon"),output[:SW_dn_clr]))
   elseif output_type == :flux
-    dset = dset[:assign](LW_up_toa = (("time","lat","lon"),output[:LW_up_toa]))
-    dset = dset[:assign](LW_up_clr_toa = (("time","lat","lon"),output[:LW_up_clr_toa]))
-    dset = dset[:assign](SW_up_toa = (("time","lat","lon"),output[:SW_up_toa]))
-    dset = dset[:assign](SW_dn_toa = (("time","lat","lon"),output[:SW_dn_toa]))
-    dset = dset[:assign](SW_up_clr_toa = (("time","lat","lon"),output[:SW_up_clr_toa]))
-    # dset = dset[:assign](flx_lw_up_surf = (("time","lat","lon"),flx_lw_up_surf))
-    # dset = dset[:assign](flx_lw_dn_surf = (("time","lat","lon"),flx_lw_dn_surf))
-    # dset = dset[:assign](flx_lw_up_clr_surf = (("time","lat","lon"),flx_lw_up_clr_surf))
-    # dset = dset[:assign](flx_lw_dn_clr_surf = (("time","lat","lon"),flx_lw_dn_clr_surf))
-    # dset = dset[:assign](flx_sw_up_surf = (("time","lat","lon"),flx_sw_up_surf))
-    # dset = dset[:assign](flx_sw_dn_surf = (("time","lat","lon"),flx_sw_dn_surf))
-    # dset = dset[:assign](flx_sw_up_clr_surf = (("time","lat","lon"),flx_sw_up_clr_surf))
-    # dset = dset[:assign](flx_sw_dn_clr_surf = (("time","lat","lon"),flx_sw_dn_clr_surf))
-    dset = dset[:assign](LW_up_trop = (("time","lat","lon"),output[:LW_up_trop]))
-    dset = dset[:assign](LW_up_clr_trop = (("time","lat","lon"),output[:LW_up_clr_trop]))
-    dset = dset[:assign](LW_dn_trop = (("time","lat","lon"),output[:LW_dn_trop]))
-    dset = dset[:assign](LW_dn_clr_trop = (("time","lat","lon"),output[:LW_dn_clr_trop]))
-    dset = dset[:assign](SW_up_trop = (("time","lat","lon"),output[:SW_up_trop]))
-    dset = dset[:assign](SW_up_clr_trop = (("time","lat","lon"),output[:SW_up_clr_trop]))
-    dset = dset[:assign](SW_dn_trop = (("time","lat","lon"),output[:SW_dn_trop]))
-    dset = dset[:assign](SW_dn_clr_trop = (("time","lat","lon"),output[:SW_dn_clr_trop]))
+    dset1 = dset1[:assign](LW_up_toa = (("time","lat","lon"),output[:LW_up_toa]))
+    dset1 = dset1[:assign](LW_up_clr_toa = (("time","lat","lon"),output[:LW_up_clr_toa]))
+    dset1 = dset1[:assign](SW_up_toa = (("time","lat","lon"),output[:SW_up_toa]))
+    dset1 = dset1[:assign](SW_dn_toa = (("time","lat","lon"),output[:SW_dn_toa]))
+    dset1 = dset1[:assign](SW_up_clr_toa = (("time","lat","lon"),output[:SW_up_clr_toa]))
+    # dset1 = dset1[:assign](flx_lw_up_surf = (("time","lat","lon"),flx_lw_up_surf))
+    # dset1 = dset1[:assign](flx_lw_dn_surf = (("time","lat","lon"),flx_lw_dn_surf))
+    # dset1 = dset1[:assign](flx_lw_up_clr_surf = (("time","lat","lon"),flx_lw_up_clr_surf))
+    # dset1 = dset1[:assign](flx_lw_dn_clr_surf = (("time","lat","lon"),flx_lw_dn_clr_surf))
+    # dset1 = dset1[:assign](flx_sw_up_surf = (("time","lat","lon"),flx_sw_up_surf))
+    # dset1 = dset1[:assign](flx_sw_dn_surf = (("time","lat","lon"),flx_sw_dn_surf))
+    # dset1 = dset1[:assign](flx_sw_up_clr_surf = (("time","lat","lon"),flx_sw_up_clr_surf))
+    # dset1 = dset1[:assign](flx_sw_dn_clr_surf = (("time","lat","lon"),flx_sw_dn_clr_surf))
+    dset1 = dset1[:assign](LW_up_trop = (("time","lat","lon"),output[:LW_up_trop]))
+    dset1 = dset1[:assign](LW_up_clr_trop = (("time","lat","lon"),output[:LW_up_clr_trop]))
+    dset1 = dset1[:assign](LW_dn_trop = (("time","lat","lon"),output[:LW_dn_trop]))
+    dset1 = dset1[:assign](LW_dn_clr_trop = (("time","lat","lon"),output[:LW_dn_clr_trop]))
+    dset1 = dset1[:assign](SW_up_trop = (("time","lat","lon"),output[:SW_up_trop]))
+    dset1 = dset1[:assign](SW_up_clr_trop = (("time","lat","lon"),output[:SW_up_clr_trop]))
+    dset1 = dset1[:assign](SW_dn_trop = (("time","lat","lon"),output[:SW_dn_trop]))
+    dset1 = dset1[:assign](SW_dn_clr_trop = (("time","lat","lon"),output[:SW_dn_clr_trop]))
   end
 
   # if isempty(output_path)
@@ -378,8 +379,8 @@ function radiation_pert(input_fn1::String,input_fn2::String,pert::Symbol,CO2_mul
   # else
   #   output_fn = output_path * "/" * replace(split(input_fn,"/")[end],".nc","_offline_radiation_$(lpad(time_i,3,0))_$(CO2_multiple)x_$(output_type).nc")
   # end
-  # dset[:to_netcdf]("netcdfs/tmp/" * output_fn)
-  dset[:to_netcdf](output_fn)
+  # dset1[:to_netcdf]("netcdfs/tmp/" * output_fn)
+  dset1[:to_netcdf](output_fn)
   println("Offline radiation pert completed and written to ", output_fn)
   nothing
 end
