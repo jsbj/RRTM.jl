@@ -123,6 +123,18 @@ function legtri(zsin,icp)
   end
   palp
 end
+
+function to_tropo_index(ps,tropo,index_type)
+  i = 1
+  for i in 1:length(ps)
+    if ps[i] > tropo
+      break
+    end
+  end
+
+  index_type == :trop ? i : (index_type == :strat ? i-1 : nothing)
+end
+
 # big functions
 
 # radiation called on a full file
@@ -225,6 +237,150 @@ function radiation(input_fn::String,CO2_multiple,time_i,SW_correction=true,outpu
   # dset[:to_netcdf]("netcdfs/tmp/" * output_fn)
   dset[:to_netcdf](output_fn)
   println("Offline radiation completed and written to ", output_fn)
+  nothing
+end
+
+function radiation_pert(input_fn1::String,input_fn2::String,pert::Symbol,CO2_multiple,time_i,output_fn,output_type,mask_fn::String = "$(@__DIR__)/../netcdfs/unit.24.T63GR15.nc")
+  # println("Calculating offline radiation for ", input_fn, " time step ", time_i)
+  #
+  mask_dset = xr.open_dataset(mask_fn,decode_times=false) # (lat=collect(0:(just_these_lats-1)),lon=collect(0:(just_these_lons-1)))
+  dset1 = xr.open_dataset(input_fn1,decode_times=false)[:isel](time=collect((time_i:time_i)-1)) #
+  dset2 = xr.open_dataset(input_fn2,decode_times=false)[:isel](time=collect((time_i:time_i)-1)) # (lat=collect(0:(just_these_lats-1)),lon=collect(0:(just_these_lons-1)))
+  
+  aersols(mask_dset,dset) = aerosols(mask_dset["lat"][:values],dset["hyai"][:values],dset["hybi"][:values],dset["pp_hl"][:values],dset["pp_fl"][:values],dset["tk_hl"][:values])
+  aer_tau_lw_vr, aer_tau_sw_vr, aer_piz_sw_vr, aer_cg_sw_vr = aersols(mask_dset,(pert == :aer) ? dset2 : dset1)
+
+  input = Dict(
+    :laland => mask_dset["SLM"][:values], # land
+    :laglac => mask_dset["GLAC"][:values], # glacier
+    :ktype => (pert == :cl ? dset2 : dset1)["ktype"][:values], # type of convection
+    :cdnc => (pert == :cl ? dset2 : dset1)["cdnc"][:values],
+    :cld_frc => (pert == :cl ? dset2 : dset1)["cld_frc"][:values],
+    :xm_liq => (pert == :cl ? dset2 : dset1)["q_liq"][:values],
+    :xm_ice => (pert == :cl ? dset2 : dset1)["q_ice"][:values],
+    :alb => (pert == :alb ? dset2 : dset1)["alb"][:values],
+    :xm_vap => (pert == :q ? dset2 : dset1)["q_vap"][:values],
+    :pp_fl => (pert == :p ? dset2 : dset1)["pp_fl"][:values],
+    :pp_hl => (pert == :p ? dset2 : dset1)["pp_hl"][:values],
+    :tk_fl => dset1["tk_fl"][:values],
+    :tk_hl => dset1["tk_hl"][:values],
+    :xm_o3 => dset1["m_o3"][:values],
+    :xm_ch4 => dset1["m_ch4"][:values],
+    :xm_n2o => dset1["m_n2o"][:values],
+    :solar_constant => dset1["psctm"][:values][:,1,1],
+    # :cos_mu0 => dset["cos_mu0"][:values],
+    :cos_mu0m => dset1["cos_mu0m"][:values],
+    :zi0 => dset1["zi0"][:values],
+    :tropo => dset1["tropo"][:values],
+    :aer_tau_lw_vr => aer_tau_lw_vr,
+    :aer_tau_sw_vr => aer_tau_sw_vr,
+    :aer_piz_sw_vr => aer_piz_sw_vr,
+    :aer_cg_sw_vr => aer_cg_sw_vr
+  )
+  
+  if pert in [:T_strat,:Tcol_trop,:TLR_trop]
+    pert_list = split("$(perturbation)","_")
+    
+    ntime,nlat,nlon = size(input[:alb])
+    
+    if pert == :T_strat
+      for t in 1:ntime, lat in 1:nlat, lon in 1:nlon
+        tropo = dset1[:tropo][:values][t,lat,lon]
+      
+        pp_hl = dset1[:pp_hl][:values][t,:,lat,lon]
+        rng_hl = 1:(to_tropo_index(pp_hl,tropo,:strat))
+      
+        pp_fl = dset1[:pp_fl][:values][t,:,lat,lon]
+        rng_fl = 1:(to_tropo_index(pp_fl,tropo,:strat))
+
+        input[:tk_hl][t,rng_hl,lat,lon] = dset2["tk_hl"][:values][t,rng_hl,lat,lon]
+        input[:tk_fl][t,rng_fl,lat,lon] = dset2["tk_fl"][:values][t,rng_fl,lat,lon]
+      end
+    else
+      nhl = length(pp_hl)
+      nfl = length(pp_fl)
+      for t in 1:ntime, lat in 1:nlat, lon in 1:nlon
+        tropo = dset1[:tropo][:values][t,lat,lon]
+        
+        pp_hl = dset1[:pp_hl][:values][t,:,lat,lon]
+        rng_hl = to_tropo_index(pp_hl,tropo,:trop):nhl
+      
+        pp_fl = dset1[:pp_fl][:values][t,:,lat,lon]
+        rng_fl = to_tropo_index(pp_fl,tropo,:trop):nfl
+        
+        ΔTs = dset2[:tk_hl][t,end,lat,lon] - dset1[:tk_hl][t,end,lat,lon]
+
+        if pert == :Tcol_trop
+          input[:tk_hl][t,rng_hl,lat,lon] += ΔTs
+          input[:tk_fl][t,rng_fl,lat,lon] += ΔTs
+        elseif pert == :TRH_trop
+          input[:tk_hl][t,rng_hl,lat,lon] += (dset2["tk_hl"][:values][t,rng_hl,lat,lon] - (input[:tk_hl][t,rng_hl,lat,lon] + ΔTs))
+          input[:tk_fl][t,rng_fl,lat,lon] += (dset2["tk_fl"][:values][t,rng_fl,lat,lon] - (input[:tk_fl][t,rng_fl,lat,lon] + ΔTs))
+        end
+      end
+    end
+  end
+  #  Grid area stored from N->SLM
+  output = radiation(input,CO2_multiple,SW_correction = SW_correction,output_type = output_type)
+    
+  # rae   = 0.1277E-2     # ratio of atmosphere to earth radius
+  # zrae = rae*(rae+2)
+  # cos_mu0m = rae./(sqrt.(cos_mu0.^2+zrae)-cos_mu0)
+  # cos_mu0m = max.(cos_mu0m,0.1)
+  # xm_sat = dset["q_sat"][:values]
+  # cld_cvr = dset["cld_cvr"][:values]
+  # xm_co2 = dset["m_co2"][:values]
+  # rdayl = cos_mu0 .!= 0.0
+  # pgeom1 = dset["pgeom1"][:values] # export?
+  # alb_vis = dset["alb_vis"][:values] # alb_vis
+  # alb_nir = dset["alb_nir"][:values] # alb_nir
+  # alb_vis_dir = dset["alb_vis_dir"][:values] # alb_vis_dir
+  # alb_nir_dir = dset["alb_nir_dir"][:values] # alb_nir_dir
+  # alb_vis_dif = dset["alb_vis_dif"][:values] # alb_vis_dif
+  # alb_nir_dif = dset["alb_nir_dif"][:values] # alb_nir_dif  
+  dset = dset[:drop](intersect(["hybi","hyai","hybm","hyam","pp_sfc","psctm","alb","cos_mu0","cos_mu0m","ktype","tod","tk_sfc","dom","pp_hl","tk_hl","q_vap","tk_fl","cld_frc","cdnc","m_o3","m_ch4","pp_fl","q_liq","m_n2o","q_ice","mlev","ilev","flx_lw_dn_surf","flx_lw_dn_clr_surf","flx_lw_up_toa","flx_lw_up_clr_toa","flx_lw_up_surf","flx_lw_up_clr_surf","flx_sw_dn_toa","flx_sw_dn_surf","flx_sw_dn_clr_surf","flx_sw_up_toa","flx_sw_up_clr_toa","flx_sw_up_surf","flx_sw_up_clr_surf","zi0","tropo"],dset[:keys]()))
+  dset = dset[:assign](tropopause = (("time","lat","lon"),output[:tropopause]))
+  if output_type == :profile
+    dset = dset[:assign](LW_up = (("time","ilev","lat","lon"),output[:LW_up]))
+    dset = dset[:assign](LW_dn = (("time","ilev","lat","lon"),output[:LW_dn]))
+    dset = dset[:assign](SW_up = (("time","ilev","lat","lon"),output[:SW_up]))
+    dset = dset[:assign](SW_dn = (("time","ilev","lat","lon"),output[:SW_dn]))
+    dset = dset[:assign](LW_up_clr = (("time","ilev","lat","lon"),output[:LW_up_clr]))
+    dset = dset[:assign](LW_dn_clr = (("time","ilev","lat","lon"),output[:LW_dn_clr]))
+    dset = dset[:assign](SW_up_clr = (("time","ilev","lat","lon"),output[:SW_up_clr]))
+    dset = dset[:assign](SW_dn_clr = (("time","ilev","lat","lon"),output[:SW_dn_clr]))
+  elseif output_type == :flux
+    dset = dset[:assign](LW_up_toa = (("time","lat","lon"),output[:LW_up_toa]))
+    dset = dset[:assign](LW_up_clr_toa = (("time","lat","lon"),output[:LW_up_clr_toa]))
+    dset = dset[:assign](SW_up_toa = (("time","lat","lon"),output[:SW_up_toa]))
+    dset = dset[:assign](SW_dn_toa = (("time","lat","lon"),output[:SW_dn_toa]))
+    dset = dset[:assign](SW_up_clr_toa = (("time","lat","lon"),output[:SW_up_clr_toa]))
+    # dset = dset[:assign](flx_lw_up_surf = (("time","lat","lon"),flx_lw_up_surf))
+    # dset = dset[:assign](flx_lw_dn_surf = (("time","lat","lon"),flx_lw_dn_surf))
+    # dset = dset[:assign](flx_lw_up_clr_surf = (("time","lat","lon"),flx_lw_up_clr_surf))
+    # dset = dset[:assign](flx_lw_dn_clr_surf = (("time","lat","lon"),flx_lw_dn_clr_surf))
+    # dset = dset[:assign](flx_sw_up_surf = (("time","lat","lon"),flx_sw_up_surf))
+    # dset = dset[:assign](flx_sw_dn_surf = (("time","lat","lon"),flx_sw_dn_surf))
+    # dset = dset[:assign](flx_sw_up_clr_surf = (("time","lat","lon"),flx_sw_up_clr_surf))
+    # dset = dset[:assign](flx_sw_dn_clr_surf = (("time","lat","lon"),flx_sw_dn_clr_surf))
+    dset = dset[:assign](LW_up_trop = (("time","lat","lon"),output[:LW_up_trop]))
+    dset = dset[:assign](LW_up_clr_trop = (("time","lat","lon"),output[:LW_up_clr_trop]))
+    dset = dset[:assign](LW_dn_trop = (("time","lat","lon"),output[:LW_dn_trop]))
+    dset = dset[:assign](LW_dn_clr_trop = (("time","lat","lon"),output[:LW_dn_clr_trop]))
+    dset = dset[:assign](SW_up_trop = (("time","lat","lon"),output[:SW_up_trop]))
+    dset = dset[:assign](SW_up_clr_trop = (("time","lat","lon"),output[:SW_up_clr_trop]))
+    dset = dset[:assign](SW_dn_trop = (("time","lat","lon"),output[:SW_dn_trop]))
+    dset = dset[:assign](SW_dn_clr_trop = (("time","lat","lon"),output[:SW_dn_clr_trop]))
+  end
+
+  # if isempty(output_path)
+  #   output_fn = replace(input_fn,".nc","_offline_radiation_$(lpad(time_i,3,0))_$(CO2_multiple)x_$(output_type).nc")
+  # else
+  #   output_fn = output_path * "/" * replace(split(input_fn,"/")[end],".nc","_offline_radiation_$(lpad(time_i,3,0))_$(CO2_multiple)x_$(output_type).nc")
+  # end
+  # dset[:to_netcdf]("netcdfs/tmp/" * output_fn)
+  dset[:to_netcdf](output_fn)
+  println("Offline radiation pert completed and written to ", output_fn)
   nothing
 end
 
