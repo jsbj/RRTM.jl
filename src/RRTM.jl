@@ -316,13 +316,15 @@ function radiation_pert(input_fn1::String,input_fn2::String,pert::Symbol,CO2_mul
         if pert == :Tcol_trop
           input[:tk_hl][t,rng_hl,lat,lon] += ΔTs
           input[:tk_fl][t,rng_fl,lat,lon] += ΔTs
-        elseif pert == :TRH_trop
+        elseif pert == :TLR_trop
           input[:tk_hl][t,rng_hl,lat,lon] += (dset2["tk_hl"][:values][t,rng_hl,lat,lon] - (input[:tk_hl][t,rng_hl,lat,lon] + ΔTs))
           input[:tk_fl][t,rng_fl,lat,lon] += (dset2["tk_fl"][:values][t,rng_fl,lat,lon] - (input[:tk_fl][t,rng_fl,lat,lon] + ΔTs))
         end
       end
     end
   end
+  
+  println()
   
   #  Grid area stored from N->SLM
   output = radiation(input,CO2_multiple,SW_correction = SW_correction,output_type = output_type)
