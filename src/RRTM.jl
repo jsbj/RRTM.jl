@@ -280,7 +280,7 @@ function radiation_pert(input_fn1::String,input_fn2::String,pert::Symbol,CO2_mul
   )
   
   if pert in [:T_strat,:Tcol_trop,:TLR_trop]
-    pert_list = split("$(perturbation)","_")
+    pert_list = split("$(pert)","_")
     
     ntime,nlat,nlon = size(input[:alb])
     
