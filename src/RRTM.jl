@@ -279,13 +279,10 @@ function radiation_pert(input_fn1::String,input_fn2::String,pert::Symbol,CO2_mul
     :aer_cg_sw_vr => aer_cg_sw_vr
   )
   
-  println(input[:tk_hl][1,1,1,1])
-  
   if pert in [:T_strat,:Tcol_trop,:TLR_trop]    
     ntime,nlat,nlon = size(input[:alb])
     
     if pert == :T_strat
-      println("T_strat")
       for t in 1:ntime, lat in 1:nlat, lon in 1:nlon
         tropo = dset1[:tropo][:values][t,lat,lon]
       
@@ -322,8 +319,6 @@ function radiation_pert(input_fn1::String,input_fn2::String,pert::Symbol,CO2_mul
       end
     end
   end
-  
-  println(input[:tk_hl][1,1,1,1])
   
   #  Grid area stored from N->SLM
   output = radiation(input,CO2_multiple,SW_correction = SW_correction,output_type = output_type)
