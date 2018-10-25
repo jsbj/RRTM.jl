@@ -296,8 +296,8 @@ function radiation_pert(input_fn1::String,input_fn2::String,pert::Symbol,CO2_mul
         input[:tk_fl][t,rng_fl,lat,lon] = dset2["tk_fl"][:values][t,rng_fl,lat,lon]
       end
     else
-      nhl = length(pp_hl[t,:,lat,lon])
-      nfl = length(pp_fl[t,:,lat,lon])
+      nhl = length(pp_hl[1,:,1,1])
+      nfl = length(pp_fl[1,:,1,1])
       for t in 1:ntime, lat in 1:nlat, lon in 1:nlon
         tropo = dset1[:tropo][:values][t,lat,lon]
         
