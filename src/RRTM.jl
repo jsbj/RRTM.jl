@@ -279,25 +279,29 @@ function radiation_pert(input_fn1::String,input_fn2::String,pert::Symbol,CO2_mul
     :aer_cg_sw_vr => aer_cg_sw_vr
   )
   
-  if pert in [:T_strat,:Tcol_trop,:TLR_trop]    
+  if pert in [:T_strat,:Tcol_trop,:TLR_trop,:q_strat]    
     ntime,nlat,nlon = size(input[:alb])
     
-    if pert == :T_strat
+    if pert in [:T_strat,:q_strat]
       for t in 1:ntime, lat in 1:nlat, lon in 1:nlon
         tropo = dset1[:tropo][:values][t,lat,lon]
       
-        pp_hl = dset1[:pp_hl][:values][t,:,lat,lon]
-        rng_hl = 1:(to_tropo_index(pp_hl,tropo,:strat))
-      
         pp_fl = dset1[:pp_fl][:values][t,:,lat,lon]
         rng_fl = 1:(to_tropo_index(pp_fl,tropo,:strat))
-        
-        input[:tk_hl][t,rng_hl,lat,lon] = dset2["tk_hl"][:values][t,rng_hl,lat,lon]
-        input[:tk_fl][t,rng_fl,lat,lon] = dset2["tk_fl"][:values][t,rng_fl,lat,lon]
+      
+        if pert == :T_strat
+          pp_hl = dset1[:pp_hl][:values][t,:,lat,lon]
+          rng_hl = 1:(to_tropo_index(pp_hl,tropo,:strat))
+          
+          input[:tk_hl][t,rng_hl,lat,lon] = dset2["tk_hl"][:values][t,rng_hl,lat,lon]
+          input[:tk_fl][t,rng_fl,lat,lon] = dset2["tk_fl"][:values][t,rng_fl,lat,lon]
+        elseif pert == :q_strat
+          input[:xm_vap][t,rng_fl,lat,lon] = dset2["q_vap"][:values][t,rng_fl,lat,lon]
+        end
       end
     else
-      nhl = length(pp_hl[1,:,1,1])
-      nfl = length(pp_fl[1,:,1,1])
+      nhl = length(dset1[:pp_hl][:values][1,:,1,1])
+      nfl = length(dset1[:pp_fl][:values][1,:,1,1])
       for t in 1:ntime, lat in 1:nlat, lon in 1:nlon
         tropo = dset1[:tropo][:values][t,lat,lon]
         
@@ -307,7 +311,7 @@ function radiation_pert(input_fn1::String,input_fn2::String,pert::Symbol,CO2_mul
         pp_fl = dset1[:pp_fl][:values][t,:,lat,lon]
         rng_fl = to_tropo_index(pp_fl,tropo,:trop):nfl
         
-        ΔTs = dset2[:tk_hl][t,end,lat,lon] - dset1[:tk_hl][t,end,lat,lon]
+        ΔTs = dset2[:tk_hl][:values][t,end,lat,lon] - dset1[:tk_hl][:values][t,end,lat,lon]
 
         if pert == :Tcol_trop
           input[:tk_hl][t,rng_hl,lat,lon] += ΔTs
